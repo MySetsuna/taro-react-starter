@@ -28,7 +28,7 @@ export default defineAppConfig({
         pagePath: 'pages/message/index',
         text: '消息',
         iconPath: 'assets/tabbar/home.png',
-        selectedIconPath: 'assets/tabbar/home-selected.png'
+        selectedIconPath: 'assets/tabbar/home-selected.png',
       },
       {
         pagePath: 'pages/moments/index',

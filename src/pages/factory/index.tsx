@@ -1,7 +1,7 @@
 import { View } from '@tarojs/components'
 import { useLoad } from '@tarojs/taro'
 import { Button, Image } from '@nutui/nutui-react-taro'
-import { Locationg3, TriangleDown, TriangleUp ,Search} from '@nutui/icons-react-taro'
+import { Locationg3, TriangleDown, TriangleUp, Search } from '@nutui/icons-react-taro'
 import { useState } from 'react'
 
 export default function Factory() {
@@ -14,14 +14,18 @@ export default function Factory() {
   return (
     <View className="factory p-2">
       <View className="factory-header flex items-center">
-        <div className="location flex items-center" onClick={() => setIsOpen((open) => !open)}>
+        <div className="location flex items-center mr-1" onClick={() => setIsOpen((open) => !open)}>
           <Locationg3 className="nut-icon-am-jump nut-icon-am-infinite" size={16} />
-          <View className="location-text leading-10 mr-1 ml-1 text-ellipsis overflow-hidden whitespace-nowrap max-w-12">湖南</View>
+          <View className="location-text leading-10 mr-1 ml-1 text-ellipsis overflow-hidden whitespace-nowrap max-w-12">
+            湖南
+          </View>
           {isOpen ? <TriangleUp size={10} /> : <TriangleDown size={10} />}
         </div>
-        <View className="flex items-center w-full justify-start">
-          <Search size={16} className=" absolute left-5 w-0" />
-          <input type="text" placeholder="请输入关键字" className="rounded-full bg-slate-300 w-full h-7 pl-8" />
+        <View className="flex items-center w-full justify-start relative">
+          <span className=" absolute left-2 w-0">
+            <Search size={14} />
+          </span>
+          <input type="text" placeholder="请输入关键字" className="rounded-full bg-slate-100 w-full h-7 pl-7 text-sm" />
         </View>
       </View>
 
