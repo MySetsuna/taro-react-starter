@@ -27,14 +27,14 @@ export default function Index() {
         })
     }
     else {
-      router.switchTab({ url: '/pages/home/index' })
+      router.switchTab({ url: '/pages/factory/index' })
     }
   }
 
   return (
     <View className="flex flex-1 flex-col items-center justify-center gap-2 h-full">
       <Button plain type="primary" onClick={login}>
-        Go Home
+    Log in
       </Button>
     </View>
   )

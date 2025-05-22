@@ -9,10 +9,10 @@ type RouterType = 'navigateTo' | 'redirectTo' | 'switchTab' | 'reLaunch' | 'navi
 type SuccessCallback = TaroGeneral.CallbackResult | (TaroGeneral.CallbackResult & { eventChannel: Taro.EventChannel })
 interface TaroRouterOptions<S = SuccessCallback>
   extends Omit<Taro.navigateTo.Option, 'success'>,
-  Omit<Taro.navigateBack.Option, 'success'>,
-  Omit<Taro.redirectTo.Option, 'success'>,
-  Omit<Taro.reLaunch.Option, 'success'>,
-  Omit<Taro.switchTab.Option, 'success'> {
+    Omit<Taro.navigateBack.Option, 'success'>,
+    Omit<Taro.redirectTo.Option, 'success'>,
+    Omit<Taro.reLaunch.Option, 'success'>,
+    Omit<Taro.switchTab.Option, 'success'> {
   data?: string | AnyObj
   success?: (res: S) => void
 }
@@ -20,8 +20,7 @@ interface TaroRouterOptions<S = SuccessCallback>
 function searchParams2Obj(params: any) {
   const searchParams = new URLSearchParams(params)
   const obj: AnyObj = {}
-  for (const [key, value] of searchParams.entries())
-    obj[key] = value
+  for (const [key, value] of searchParams.entries()) obj[key] = value
 
   return obj
 }
@@ -37,8 +36,7 @@ function authCheck(urlKey: string, type: RouterType, options: TaroRouterOptions)
       return
     }
     navigate(type, options)
-  }
-  else {
+  } else {
     navigate(type, options)
   }
 }
@@ -47,10 +45,8 @@ function authCheck(urlKey: string, type: RouterType, options: TaroRouterOptions)
  */
 function navigate(type: RouterType, options: TaroRouterOptions) {
   const { data, ...rest } = options
-  if (!['navigateTo', 'redirectTo', 'switchTab', 'reLaunch'].includes(type))
-    return
-  if (!rest.url.startsWith('/'))
-    rest.url = `/${rest.url}`
+  if (!['navigateTo', 'redirectTo', 'switchTab', 'reLaunch'].includes(type)) return
+  if (!rest.url.startsWith('/')) rest.url = `/${rest.url}`
 
   Taro[type](rest)
 }
@@ -59,8 +55,7 @@ const singletonEnforcer = Symbol('Router')
 class Router {
   private static _instance: Router
   constructor(enforcer: any) {
-    if (enforcer !== singletonEnforcer)
-      throw new Error('Cannot initialize single instance')
+    if (enforcer !== singletonEnforcer) throw new Error('Cannot initialize single instance')
   }
 
   static get instance() {
@@ -78,34 +73,28 @@ class Router {
     // 单独存一份url,待会要用
     urlKey = urlKey
       .split('/')
-      .filter(e => e !== '')
+      .filter((e) => e !== '')
       .join('/')
     try {
       if (type === 'navigateBack') {
         Taro.navigateBack(rest)
-      }
-      else {
-        if (!urlKey.trim() || !routes.includes(urlKey))
-          throw new Error('无效的路由')
+      } else {
+        if (!urlKey.trim() || !routes.includes(urlKey)) throw new Error('无效的路由')
 
         if (type === 'switchTab') {
           url = urlKey
-        }
-        else {
+        } else {
           let obj: AnyObj = {}
-          if (data && typeof data === 'string' && data.trim())
-            data = searchParams2Obj(data)
+          if (data && typeof data === 'string' && data.trim()) data = searchParams2Obj(data)
 
-          if (queryStr && queryStr.trim())
-            obj = searchParams2Obj(queryStr)
+          if (queryStr && queryStr.trim()) obj = searchParams2Obj(queryStr)
 
           const str = new URLSearchParams(utils.merge(data as object, obj)).toString()
           url = str ? `${urlKey}?${str}` : urlKey
         }
         authCheck(urlKey, type, { ...rest, url, events })
       }
-    }
-    catch (error) {
+    } catch (error) {
       // TODO
       console.error(error.message)
     }
@@ -147,7 +136,14 @@ class Router {
   }
 }
 // 需要权限的路由,注意首尾不能带有斜杠
-const authRoutes = ['pages/home/index', 'pages/profile/index']
+// const authRoutes = ['pages/factory/index', 'pages/message/index', 'pages/moments/index', 'pages/mine/index']
+const authRoutes = ['']
 // 全部路由
-const routes = ['pages/blank/index', 'pages/index/index', 'pages/home/index', 'pages/profile/index']
+const routes = [
+  'pages/factory/index',
+  'pages/message/index',
+  'pages/moments/index',
+  'pages/mine/index',
+  'pages/index/index',
+]
 export default Router.instance
