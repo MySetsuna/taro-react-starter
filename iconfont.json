@@ -1,0 +1,10 @@
+{
+    "symbol_url": "//at.alicdn.com/t/c/font_4941467_ytd2csl19k.js",
+    "save_dir": "./src/icons",
+    "use_typescript": true,
+    "platforms": "*",
+    "use_rpx": true,
+    "trim_icon_prefix": "icon-lm-",
+    "default_icon_size": 45,
+    "design_width": 750
+}

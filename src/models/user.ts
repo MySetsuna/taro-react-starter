@@ -7,15 +7,18 @@ import createSelectors from './selectors'
 interface State {
   token: string
   isLogged: boolean
+  lastTab: string
 }
 interface Action {
   setToken: (token: string) => void
   removeToken: () => void
+  setLastTab: (tab: string) => void
 }
 
 const initialState: State = {
   token: '',
   isLogged: false,
+  lastTab: '',
 }
 const store = create<State & Action>()(
   immer(
@@ -23,6 +26,8 @@ const store = create<State & Action>()(
       (set, get) => ({
         token: '',
         isLogged: false,
+        lastTab: '',
+        setLastTab: tab => set({ lastTab: tab }),
         setToken: token => set({ token, isLogged: true }),
         removeToken: () => set({ token: '', isLogged: false }),
       }),

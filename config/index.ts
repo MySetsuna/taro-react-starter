@@ -15,8 +15,7 @@ export default defineConfig(async (merge, { command, mode }) => {
     date: '2023-11-5',
     designWidth: (input: any) => {
       // 配置 NutUI 375 尺寸
-      if (input?.file?.replace(/\\+/g, '/').indexOf('@nutui') > -1)
-        return 375
+      if (input?.file?.replace(/\\+/g, '/').indexOf('@nutui') > -1) return 375
 
       // 全局使用 Taro 默认的 750 尺寸
       return 750
@@ -84,6 +83,9 @@ export default defineConfig(async (merge, { command, mode }) => {
           },
         })
       },
+      miniCssExtractPluginOption: {
+        ignoreOrder: true, // 添加这行配置
+      },
     },
     h5: {
       publicPath: '/',
@@ -94,6 +96,7 @@ export default defineConfig(async (merge, { command, mode }) => {
         chunkFilename: 'js/[name].[chunkhash:8].js',
       },
       miniCssExtractPluginOption: {
+        enableExtract:true,
         ignoreOrder: true,
         filename: 'css/[name].[hash].css',
         chunkFilename: 'css/[name].[chunkhash].css',

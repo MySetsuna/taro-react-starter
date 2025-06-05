@@ -6,7 +6,7 @@ import createSelectors from './selectors'
 
 interface Redirect {
   url: string
-  tab?: boolean
+  // tab?: boolean
 }
 
 interface State {

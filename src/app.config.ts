@@ -1,57 +1,47 @@
+import { useGlobalIconFont } from './icons/helper'
+
 export default defineAppConfig({
-  pages: [
-    'pages/factory/index',
-    'pages/message/index',
-    'pages/moments/index',
-    'pages/mine/index',
-    'pages/magazine/index',
-    'pages/index/index'
-  ],
+  usingComponents: Object.assign(useGlobalIconFont()),
+  pages: ['pages/login/index', 'pages/index/index'],
   animation: true,
-  // entryPagePath: 'pages/index/index',
-  entryPagePath: 'pages/factory/index',
+  entryPagePath: 'pages/index/index',
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#fff',
     navigationBarTitleText: '广告制作',
-    navigationBarTextStyle: 'black'
+    navigationBarTextStyle: 'black',
   },
   tabBar: {
+    custom: true,
     list: [
       {
-        pagePath: 'pages/factory/index',
-        text: '厂家',
-        iconPath: 'assets/tabbar/home.png',
-        selectedIconPath: 'assets/tabbar/home-selected.png'
+        pagePath: 'pages/index/index',
+        text: '罗马广告',
       },
       {
-        pagePath: 'pages/message/index',
-        text: '消息',
-        iconPath: 'assets/tabbar/home.png',
-        selectedIconPath: 'assets/tabbar/home-selected.png',
+        pagePath: 'pages/login/index',
+        text: '登录',
       },
-      {
-        pagePath: 'pages/moments/index',
-        text: '广告圈',
-        iconPath: 'assets/tabbar/home.png',
-        selectedIconPath: 'assets/tabbar/home-selected.png'
-      },
-      {
-        pagePath: 'pages/magazine/index',  // 添加杂志页面到 tabBar
-        text: '杂志',
-        iconPath: 'assets/tabbar/home.png',
-        selectedIconPath: 'assets/tabbar/home-selected.png'
-      },
-      {
-        pagePath: 'pages/mine/index',
-        text: '我的',
-        iconPath: 'assets/tabbar/profile.png',
-        selectedIconPath: 'assets/tabbar/profile-selected.png'
-      }
+      // {
+      //   pagePath: 'pages/message/index',
+      //   text: '消息',
+      // },
+      // {
+      //   pagePath: 'pages/moments/index',
+      //   text: '广告圈',
+      // },
+      // {
+      //   pagePath: 'pages/magazine/index', // 添加杂志页面到 tabBar
+      //   text: '杂志',
+      // },
+      // {
+      //   pagePath: 'pages/mine/index',
+      //   text: '我的',
+      // },
     ],
     color: '#999',
     selectedColor: '#ff0000',
     backgroundColor: '#fff',
-    borderStyle: 'black'
-  }
+    borderStyle: 'black',
+  },
 })
