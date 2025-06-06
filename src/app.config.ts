@@ -2,7 +2,7 @@ import { useGlobalIconFont } from './icons/helper'
 
 export default defineAppConfig({
   usingComponents: Object.assign(useGlobalIconFont()),
-  pages: ['pages/login/index', 'pages/index/index'],
+  pages: ['pages/index/index', 'pages/login/index'],
   animation: true,
   entryPagePath: 'pages/index/index',
   window: {

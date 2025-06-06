@@ -16,12 +16,10 @@ const AuthRoute = () => {
   useEffect(() => {
     if (token == '' || !isLogged) {
       // message.error("token 过期，请重新登录!");
-      Taro.redirectTo({ url: '/pages/login/index/' })
+      Taro.switchTab({ url: '/pages/login/index' })
     } else {
       // 获取上次登录tab
-      if (lastTab) {
-        navigate(lastTab)
-      }
+      navigate(lastTab || 'factory')
     }
   }, [token, isLogged])
 

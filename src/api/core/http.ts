@@ -67,13 +67,13 @@ class AxiosRequest {
     this.mergeConfig()
     this.service = axios.create(this.config)
     // 请求拦截
-    this.config?.requestInterceptors?.forEach((interceptor) => {
+    this.config.requestInterceptors.forEach((interceptor) => {
       Array.isArray(interceptor)
         ? this.service.interceptors.request.use(interceptor[0], interceptor[1])
         : this.service.interceptors.request.use(interceptor)
     })
     // 响应拦截
-    this.config?.responseInterceptors?.forEach((interceptor) => {
+    this.config.responseInterceptors.forEach((interceptor) => {
       Array.isArray(interceptor)
         ? this.service.interceptors.response.use(interceptor[0], interceptor[1])
         : this.service.interceptors.response.use(interceptor)
@@ -105,16 +105,20 @@ class AxiosRequest {
     responseInterceptors?: IResponseInterceptorTuple[]
   }) {
     const { requestInterceptors, responseInterceptors } = opts
-    const requestInterceptorsToEject = requestInterceptors?.map((interceptor) => {
-      return Array.isArray(interceptor)
-        ? this.service.interceptors.request.use(interceptor[0], interceptor[1])
-        : this.service.interceptors.request.use(interceptor)
-    })
-    const responseInterceptorsToEject = (responseInterceptors as IResponseInterceptorTuple[])?.map((interceptor) => {
-      return Array.isArray(interceptor)
-        ? this.service.interceptors.response.use(interceptor[0], interceptor[1])
-        : this.service.interceptors.response.use(interceptor)
-    })
+    const requestInterceptorsToEject =
+      requestInterceptors &&
+      requestInterceptors.map((interceptor) => {
+        return Array.isArray(interceptor)
+          ? this.service.interceptors.request.use(interceptor[0], interceptor[1])
+          : this.service.interceptors.request.use(interceptor)
+      })
+    const responseInterceptorsToEject =
+      responseInterceptors &&
+      (responseInterceptors as IResponseInterceptorTuple[]).map((interceptor) => {
+        return Array.isArray(interceptor)
+          ? this.service.interceptors.response.use(interceptor[0], interceptor[1])
+          : this.service.interceptors.response.use(interceptor)
+      })
     return { requestInterceptorsToEject, responseInterceptorsToEject }
   }
 
@@ -124,12 +128,14 @@ class AxiosRequest {
    */
   private removeInterceptors(opts: { requestInterceptorsToEject?: number[]; responseInterceptorsToEject?: number[] }) {
     const { requestInterceptorsToEject, responseInterceptorsToEject } = opts
-    requestInterceptorsToEject?.forEach((interceptor) => {
-      this.service.interceptors.request.eject(interceptor)
-    })
-    responseInterceptorsToEject?.forEach((interceptor) => {
-      this.service.interceptors.response.eject(interceptor)
-    })
+    requestInterceptorsToEject &&
+      requestInterceptorsToEject.forEach((interceptor) => {
+        this.service.interceptors.request.eject(interceptor)
+      })
+    responseInterceptorsToEject &&
+      responseInterceptorsToEject.forEach((interceptor) => {
+        this.service.interceptors.response.eject(interceptor)
+      })
   }
 
   /**
@@ -153,7 +159,7 @@ class AxiosRequest {
         .catch((error) => {
           this.removeInterceptors({ requestInterceptorsToEject, responseInterceptorsToEject })
           try {
-            const handler = this.config?.errorConfig?.errorHandler
+            const handler = this.config && this.config.errorConfig && this.config.errorConfig.errorHandler
             if (handler) handler(error, opts)
           } catch (e) {
             reject(e)
@@ -186,7 +192,7 @@ class AxiosRequest {
         .catch((error) => {
           this.removeInterceptors({ requestInterceptorsToEject, responseInterceptorsToEject })
           try {
-            const handler = this.config?.errorConfig?.errorHandler
+            const handler = this.config && this.config.errorConfig && this.config.errorConfig.errorHandler
             if (handler) handler(error, opts)
           } catch (e) {
             reject(e)
@@ -219,7 +225,7 @@ class AxiosRequest {
         .catch((error) => {
           this.removeInterceptors({ requestInterceptorsToEject, responseInterceptorsToEject })
           try {
-            const handler = this.config?.errorConfig?.errorHandler
+            const handler = this.config && this.config.errorConfig && this.config.errorConfig.errorHandler
             if (handler) handler(error, opts)
           } catch (e) {
             reject(e)

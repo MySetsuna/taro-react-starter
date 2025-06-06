@@ -89,7 +89,7 @@ const requestConfig: RequestConfig<ResponseStructure> = {
     },
     // 错误接收及处理
     errorHandler: (error: any, opts) => {
-      if (opts?.skipErrorHandler) return
+      if (opts && opts.skipErrorHandler) return
       // 自定义错误的处理
       if (error.name === 'BizError') {
         bizErrorHandler(error)

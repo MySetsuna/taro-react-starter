@@ -102,7 +102,7 @@ function Factory() {
       method: 'GET',
     })
     setCategories(data.rows)
-    setCurrentCategory(data.rows[0]?.id)
+    if (data.rows[0]) setCurrentCategory(data.rows[0].id)
   }, [])
 
   const debouncedSearch = useDebounce(fetchFactoryList, 300)
@@ -140,7 +140,7 @@ function Factory() {
     fetchCategoryList()
   }, [])
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     getWrapperHeight().then((height) => {
       setWrapperHeight(height)
     })
