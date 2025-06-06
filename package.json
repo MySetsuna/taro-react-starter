@@ -71,6 +71,7 @@
     "area-data": "^5.0.6",
     "axios": "^1.6.0",
     "immer": "^10.0.3",
+    "lodash": "^4.17.21",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-router": "^7.6.2",

@@ -2,16 +2,14 @@
 /* eslint-disable */
 
 import React, { SVGAttributes, FunctionComponent } from 'react';
-import IconLmMagazine from './IconLmMagazine';
-import IconLmMoments from './IconLmMoments';
-import IconLmMine from './IconLmMine';
-import IconLmMine1 from './IconLmMine1';
-export { default as IconLmMagazine } from './IconLmMagazine';
-export { default as IconLmMoments } from './IconLmMoments';
-export { default as IconLmMine } from './IconLmMine';
-export { default as IconLmMine1 } from './IconLmMine1';
+import LuomaMoments from './LuomaMoments';
+import LuomaMine from './LuomaMine';
+import LuomaMagazine from './LuomaMagazine';
+export { default as LuomaMoments } from './LuomaMoments';
+export { default as LuomaMine } from './LuomaMine';
+export { default as LuomaMagazine } from './LuomaMagazine';
 
-export type IconNames = 'magazine' | 'moments' | 'mine' | 'mine1';
+export type IconNames = 'moments' | 'mine' | 'magazine';
 
 interface Props extends Omit<SVGAttributes<SVGElement>, 'color'> {
   name: IconNames;
@@ -21,14 +19,12 @@ interface Props extends Omit<SVGAttributes<SVGElement>, 'color'> {
 
 const IconFont: FunctionComponent<Props> = ({ name, ...rest }) => {
   switch (name) {
-    case 'magazine':
-      return <IconLmMagazine {...rest} />;
     case 'moments':
-      return <IconLmMoments {...rest} />;
+      return <LuomaMoments {...rest} />;
     case 'mine':
-      return <IconLmMine {...rest} />;
-    case 'mine1':
-      return <IconLmMine1 {...rest} />;
+      return <LuomaMine {...rest} />;
+    case 'magazine':
+      return <LuomaMagazine {...rest} />;
 
   }
 

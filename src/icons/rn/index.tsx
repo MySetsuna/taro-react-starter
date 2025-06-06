@@ -4,16 +4,14 @@
 import React, { FunctionComponent } from 'react';
 import { ViewProps } from 'react-native';
 import { GProps } from 'react-native-svg';
-import IconLmMagazine from './IconLmMagazine';
-import IconLmMoments from './IconLmMoments';
-import IconLmMine from './IconLmMine';
-import IconLmMine1 from './IconLmMine1';
-export { default as IconLmMagazine } from './IconLmMagazine';
-export { default as IconLmMoments } from './IconLmMoments';
-export { default as IconLmMine } from './IconLmMine';
-export { default as IconLmMine1 } from './IconLmMine1';
+import LuomaMoments from './LuomaMoments';
+import LuomaMine from './LuomaMine';
+import LuomaMagazine from './LuomaMagazine';
+export { default as LuomaMoments } from './LuomaMoments';
+export { default as LuomaMine } from './LuomaMine';
+export { default as LuomaMagazine } from './LuomaMagazine';
 
-export type IconNames = 'magazine' | 'moments' | 'mine' | 'mine1';
+export type IconNames = 'moments' | 'mine' | 'magazine';
 
 interface Props extends GProps, ViewProps {
   name: IconNames;
@@ -23,14 +21,12 @@ interface Props extends GProps, ViewProps {
 
 let IconFont: FunctionComponent<Props> = ({ name, ...rest }) => {
   switch (name) {
-    case 'magazine':
-      return <IconLmMagazine key="1" {...rest} />;
     case 'moments':
-      return <IconLmMoments key="2" {...rest} />;
+      return <LuomaMoments key="1" {...rest} />;
     case 'mine':
-      return <IconLmMine key="3" {...rest} />;
-    case 'mine1':
-      return <IconLmMine1 key="4" {...rest} />;
+      return <LuomaMine key="2" {...rest} />;
+    case 'magazine':
+      return <LuomaMagazine key="3" {...rest} />;
   }
 
   return null;

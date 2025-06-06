@@ -1,15 +1,15 @@
 Component({
   props: {
-    // magazine | moments | mine | mine1
+    // moments | mine | magazine
     name: null,
     // string | string[]
     color: '',
-    size: 50,
+    size: 45,
   },
   data: {
     colors: '',
     quot: '"',
-    svgSize: 50,
+    svgSize: 45,
     isStr: true,
   },
   didMount() {

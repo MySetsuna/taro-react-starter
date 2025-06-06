@@ -14,8 +14,8 @@ interface IRequestOptions extends AxiosRequestConfig {
   [key: string]: any
 }
 
-interface IRequest<T = any> {
-  (url: string, opts?: IRequestOptions): Promise<T>
+interface IRequest {
+  <T>(url: string, opts?: IRequestOptions): Promise<T>
 }
 
 interface IUpload<T = any, D = any> {
@@ -62,8 +62,7 @@ class AxiosRequest {
   }
 
   constructor(enforcer: any) {
-    if (enforcer !== singletonEnforcer)
-      throw new Error('Cannot initialize Axios client single instance')
+    if (enforcer !== singletonEnforcer) throw new Error('Cannot initialize Axios client single instance')
 
     this.mergeConfig()
     this.service = axios.create(this.config)
@@ -123,7 +122,7 @@ class AxiosRequest {
    * 移除拦截器
    * @param opts
    */
-  private removeInterceptors(opts: { requestInterceptorsToEject?: number[], responseInterceptorsToEject?: number[] }) {
+  private removeInterceptors(opts: { requestInterceptorsToEject?: number[]; responseInterceptorsToEject?: number[] }) {
     const { requestInterceptorsToEject, responseInterceptorsToEject } = opts
     requestInterceptorsToEject?.forEach((interceptor) => {
       this.service.interceptors.request.eject(interceptor)
@@ -155,13 +154,10 @@ class AxiosRequest {
           this.removeInterceptors({ requestInterceptorsToEject, responseInterceptorsToEject })
           try {
             const handler = this.config?.errorConfig?.errorHandler
-            if (handler)
-              handler(error, opts)
-          }
-          catch (e) {
+            if (handler) handler(error, opts)
+          } catch (e) {
             reject(e)
-          }
-          finally {
+          } finally {
             reject(error) // 如果不想把错误传递到方法调用处的话就去掉这个 finally
           }
         })
@@ -191,13 +187,10 @@ class AxiosRequest {
           this.removeInterceptors({ requestInterceptorsToEject, responseInterceptorsToEject })
           try {
             const handler = this.config?.errorConfig?.errorHandler
-            if (handler)
-              handler(error, opts)
-          }
-          catch (e) {
+            if (handler) handler(error, opts)
+          } catch (e) {
             reject(e)
-          }
-          finally {
+          } finally {
             reject(error)
           }
         })
@@ -227,13 +220,10 @@ class AxiosRequest {
           this.removeInterceptors({ requestInterceptorsToEject, responseInterceptorsToEject })
           try {
             const handler = this.config?.errorConfig?.errorHandler
-            if (handler)
-              handler(error, opts)
-          }
-          catch (e) {
+            if (handler) handler(error, opts)
+          } catch (e) {
             reject(e)
-          }
-          finally {
+          } finally {
             reject(error)
           }
         })

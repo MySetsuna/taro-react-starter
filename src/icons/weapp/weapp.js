@@ -1,6 +1,6 @@
 Component({
   properties: {
-    // magazine | moments | mine | mine1
+    // moments | mine | magazine
     name: {
       type: String,
     },
@@ -16,7 +16,7 @@ Component({
     },
     size: {
       type: Number,
-      value: 50,
+      value: 45,
       observer: function(size) {
         this.setData({
           svgSize: size / 750 * wx.getSystemInfoSync().windowWidth,
@@ -26,7 +26,7 @@ Component({
   },
   data: {
     colors: '',
-    svgSize: 50 / 750 * wx.getSystemInfoSync().windowWidth,
+    svgSize: 45 / 750 * wx.getSystemInfoSync().windowWidth,
     quot: '"',
     isStr: true,
   },

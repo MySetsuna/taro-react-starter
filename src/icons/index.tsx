@@ -3,7 +3,7 @@
 
 import React, { FunctionComponent } from 'react';
 
-export type IconNames = 'magazine' | 'moments' | 'mine' | 'mine1';
+export type IconNames = 'moments' | 'mine' | 'magazine';
 
 export interface IconProps {
   name: IconNames;

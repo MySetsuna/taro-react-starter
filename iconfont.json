@@ -1,10 +1,10 @@
 {
-    "symbol_url": "//at.alicdn.com/t/c/font_4941467_ytd2csl19k.js",
+    "symbol_url": "//at.alicdn.com/t/c/font_4941467_7euw1tocfp2.js",
     "save_dir": "./src/icons",
     "use_typescript": true,
     "platforms": "*",
     "use_rpx": true,
-    "trim_icon_prefix": "icon-lm-",
-    "default_icon_size": 45,
+    "trim_icon_prefix": "luoma-",
+    "default_icon_size": 46,
     "design_width": 750
 }

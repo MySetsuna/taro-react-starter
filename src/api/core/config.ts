@@ -65,8 +65,7 @@ function responseStatusHandler(error: AxiosError) {
       default:
         console.error(`Response status:${status}`)
     }
-  }
-  else {
+  } else {
     console.error(error.message)
   }
 }
@@ -90,25 +89,21 @@ const requestConfig: RequestConfig<ResponseStructure> = {
     },
     // 错误接收及处理
     errorHandler: (error: any, opts) => {
-      if (opts?.skipErrorHandler)
-        return
+      if (opts?.skipErrorHandler) return
       // 自定义错误的处理
       if (error.name === 'BizError') {
         bizErrorHandler(error)
-      }
-      else if (error.name === 'AxiosError') {
+      } else if (error.name === 'AxiosError') {
         // Axios 的错误
         // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
         responseStatusHandler(error)
-      }
-      else if (error.request) {
+      } else if (error.request) {
         // 请求已经成功发起，但没有收到响应
         // error.request 在浏览器中是 XMLHttpRequest 的实例
         // 而在node.js中是 http.ClientRequest 的实例
         // TODO
         console.error('None response! Please retry.')
-      }
-      else {
+      } else {
         // 发送请求时出了点问题
         // TODO
         console.error('Request error, please retry')
@@ -133,16 +128,18 @@ const requestConfig: RequestConfig<ResponseStructure> = {
     (response) => {
       // 拦截响应数据，进行个性化处理
       const { config, data } = response
-      !data
-      && requestConfig.errorConfig?.errorThrower?.({
-        success: false,
-        code: 'E0001',
-        message: '缺少响应数据',
-      })
-      if (!data.success) {
-        // TODO
-        requestConfig.errorConfig?.errorThrower?.(data)
-      }
+      // !data &&
+      //   requestConfig.errorConfig?.errorThrower?.({
+      //     success: false,
+      //     code: 'E0001',
+      //     message: '缺少响应数据',
+      //   })
+      // if (!data.success) {
+      //   // TODO
+      //   requestConfig.errorConfig?.errorThrower?.(data)
+      // }
+      console.log(config, data, 'config, data')
+
       return response
     },
   ],

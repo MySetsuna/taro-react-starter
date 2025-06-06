@@ -2,7 +2,7 @@ import { memo, useEffect, useState } from 'react'
 import { Tabbar } from '@nutui/nutui-react-taro'
 import { IconFont } from '@nutui/icons-react-taro'
 import { default as IconLM } from '../icons'
-import Taro, { useDidShow, useRouter } from '@tarojs/taro'
+import Taro from '@tarojs/taro'
 
 import './index.scss'
 import { View } from '@tarojs/components'
@@ -30,7 +30,7 @@ export const tabList = [
     iconRender: (isActive: boolean) => (
       <View className={isActive ? ['nut-icon-am-breathe'].join(' ') : ''}>
         <View className={isActive ? ['nut-icon-am-rotate'].join(' ') : ''}>
-          <IconLM size={55} name="moments" color={isActive ? '#fa2c19' : ''} />
+          <IconLM name="moments" color={isActive ? '#fa2c19' : ''} />
         </View>
       </View>
     ),
