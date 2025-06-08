@@ -1,16 +1,3 @@
-export interface IResponse {
-  readonly code: number
-  readonly msg: string
-}
-
-export interface IDataResponse<T = any> extends IResponse {
-  readonly data: T
-}
-
-export interface IRowsResponse<T = any> extends IResponse {
-  readonly rows: ReadonlyArray<T>
-  readonly total: number
-}
 
 export interface ICategory {
   readonly id: number
@@ -50,3 +37,15 @@ export interface IFactory {
   //租户分类/产品分类
   readonly tenantCategoryList: ReadonlyArray<ICategory>
 }
+
+export interface IAreaItem {
+  id: number
+  name: string
+  parentId: number
+  tag: string
+  value: number
+  label: string
+  children?: Array<IAreaItem>
+}
+
+export type TAreaTree = IAreaItem

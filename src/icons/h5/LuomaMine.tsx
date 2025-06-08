@@ -27,7 +27,7 @@ const LuomaMine: FunctionComponent<Props> = ({ size, color, style: _style, ...re
 };
 
 LuomaMine.defaultProps = {
-  size: 45,
+  size: 46,
 };
 
 export default LuomaMine;

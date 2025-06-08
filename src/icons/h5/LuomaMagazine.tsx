@@ -39,7 +39,7 @@ const LuomaMagazine: FunctionComponent<Props> = ({ size, color, style: _style, .
 };
 
 LuomaMagazine.defaultProps = {
-  size: 45,
+  size: 46,
 };
 
 export default LuomaMagazine;

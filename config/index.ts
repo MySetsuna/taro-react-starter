@@ -33,7 +33,7 @@ export default defineConfig(async (merge, { command, mode }) => {
       '@': path.resolve(__dirname, '../src'),
     },
     sass: {
-      data: '@import "@nutui/nutui-react-taro/dist/styles/variables.scss";',
+      data: '@import "@nutui/nutui-react/dist/styles/variables.scss";',
     },
     defineConstants: {},
     copy: {

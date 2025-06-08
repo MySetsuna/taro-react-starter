@@ -35,7 +35,7 @@ let LuomaMagazine: FunctionComponent<Props> = ({ size, color, ...rest }) => {
 };
 
 LuomaMagazine.defaultProps = {
-  size: 45,
+  size: 46,
 };
 
 LuomaMagazine = React.memo ? React.memo(LuomaMagazine) : LuomaMagazine;

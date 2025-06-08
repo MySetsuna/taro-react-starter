@@ -2,16 +2,25 @@ import { View } from '@tarojs/components'
 import { useLoad } from '@tarojs/taro'
 import { Button, Image } from '@nutui/nutui-react-taro'
 import { useUserStore } from '@/models'
-import { TabBar } from '@/tab-bar'
-import { useTabBar } from '@/hooks/useTabBar'
+import { useNavigate } from 'react-router'
 
 function Mine() {
+  const removeToken = useUserStore.use.removeToken()
+  const isLogged = useUserStore.use.isLogged()
+
+  const navigate = useNavigate()
+
   useLoad(() => {
     console.log('Mine page loaded.')
   })
 
   const logout = () => {
-    useUserStore.use.removeToken()
+    removeToken()
+    navigate('/login')
+  }
+
+  const login = () => {
+    navigate('/login')
   }
 
   return (
@@ -46,8 +55,14 @@ function Mine() {
           </View>
         </View>
 
-        <Button className="logout-btn" onClick={logout}>
-          退出登录
+        <Button
+          size="normal"
+          style={{ height: 40, width: 200 }}
+          type="primary"
+          className="logout-btn"
+          onClick={isLogged ? logout : login}
+        >
+          {isLogged ? '退出登录' : '登录'}
         </Button>
       </View>
     </>

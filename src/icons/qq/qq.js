@@ -1,6 +1,6 @@
 Component({
   properties: {
-    // moments | mine | magazine
+    // icon | moments | mine | magazine
     name: {
       type: String,
     },
@@ -15,7 +15,7 @@ Component({
     },
     size: {
       type: Number,
-      value: 45,
+      value: 46,
       observer: function(size) {
         this.setData({
           svgSize: size / 750 * qq.getSystemInfoSync().windowWidth,
@@ -24,7 +24,7 @@ Component({
     },
   },
   data: {
-    svgSize: 45 / 750 * qq.getSystemInfoSync().windowWidth,
+    svgSize: 46 / 750 * qq.getSystemInfoSync().windowWidth,
     quot: '"',
     isStr: true,
   },

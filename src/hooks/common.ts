@@ -1,3 +1,4 @@
+import Taro from '@tarojs/taro'
 import { useCallback, useRef } from 'react'
 
 /**
@@ -27,4 +28,13 @@ export const useDebounce = <T extends (...args: any[]) => any>(fn: T, delay: num
     }
   })
   return callback as T & { cancel: () => void }
+}
+
+export const useNavTitle = <P>(fc: React.FC<P>, title: string) => {
+  return (props: P) => {
+    Taro.setNavigationBarTitle({
+      title,
+    })
+    return fc(props)
+  }
 }

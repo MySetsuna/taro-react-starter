@@ -2,7 +2,7 @@
   "miniprogramRoot": "dist/",
   "projectname": "taro-react-starter",
   "description": "taro-react-starter",
-  "appid": "wx3ac3f653002c2ab6",
+  "appid": "wxc22da3ec3549150b",
   "setting": {
     "urlCheck": true,
     "es6": false,
@@ -17,7 +17,7 @@
     }
   },
   "compileType": "miniprogram",
-  "libVersion": "3.2.1",
+  "libVersion": "3.7.12",
   "srcMiniprogramRoot": "dist/",
   "packOptions": {
     "ignore": [],

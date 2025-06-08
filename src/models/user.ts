@@ -2,22 +2,32 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { StorageSceneKey, zustandStorage } from '../libs'
 import createSelectors from './selectors'
+import { IDataResponse, IResponse } from 'types/http'
+import { EResponseCode, request } from '@/api'
+import { ILoginInfo, IWechatLoginOptions } from 'types/login'
+import Taro from '@tarojs/taro'
 
 interface State {
   token: string
   isLogged: boolean
   lastTab: string
+  userInfo: Taro.UserInfo | null
+  loginInfo: ILoginInfo | null
 }
 interface Action {
   setToken: (token: string) => void
   removeToken: () => void
   setLastTab: (tab: string) => void
+  setUserInfo: (userInfo: Taro.UserInfo) => void
+  setLoginInfo: (userInfo: ILoginInfo) => void
 }
 
 const initialState: State = {
   token: '',
   isLogged: false,
   lastTab: '',
+  userInfo: null,
+  loginInfo: null,
 }
 const store = create<State & Action>()(
   persist(
@@ -25,9 +35,18 @@ const store = create<State & Action>()(
       token: '',
       isLogged: false,
       lastTab: '',
+      userInfo: null,
+      loginInfo: null,
       setLastTab: (tab) => set({ lastTab: tab }),
       setToken: (token) => set({ token, isLogged: true }),
-      removeToken: () => set({ token: '', isLogged: false }),
+      removeToken: async () => {
+        await request<IResponse>('/auth/logout', {
+          method: 'POST',
+        })
+        set({ token: '', isLogged: false })
+      },
+      setUserInfo: (userInfo) => set({ userInfo }),
+      setLoginInfo: (loginInfo) => set({ loginInfo }),
     }),
     {
       // ! 注意这里的name是当前这个Zustand模块进行缓存时的唯一key, 每个需要缓存的Zustand模块都必须分配一个唯一key
@@ -40,4 +59,35 @@ const store = create<State & Action>()(
 export const useUserStore = createSelectors(store)
 export function useUserReset() {
   store.setState(initialState)
+}
+
+let refreshTokenTimer = null
+
+export function useRefeshTokenTimer(expireIn: number) {
+  if (refreshTokenTimer) {
+    clearTimeout(refreshTokenTimer)
+  }
+  refreshTokenTimer = setTimeout(
+    async () => {
+      const { code } = await Taro.login()
+      const res = await request<IDataResponse<ILoginInfo>, IWechatLoginOptions>('/auth/login', {
+        method: 'POST',
+        data: {
+          clientId: 'be7052a7e4f802c20df10a8d131adb12',
+          grantType: 'xcx',
+          tenantId: '000000',
+          code: '',
+          uuid: '',
+          appid: 'wxda63215f19af7717',
+          xcxCode: code,
+          userType: 'app_user',
+        },
+      })
+      if (res.code === EResponseCode.SUCCESS) {
+        store.setState({ token: res.data.access_token })
+        store.setState({ loginInfo: res.data })
+      }
+    },
+    Math.max(expireIn - 30000, 0)
+  )
 }

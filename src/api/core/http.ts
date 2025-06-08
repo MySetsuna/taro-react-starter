@@ -3,40 +3,11 @@ import utils from 'axios/unsafe/utils'
 import type { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import axios from 'axios'
 import requestConfig from './config'
+import { IErrorHandler, IRequest, IRequestInterceptorTuple, IResponseInterceptorTuple, IUpload } from 'types/http'
 
-type RequestError = AxiosError | Error
-
-interface IRequestOptions extends AxiosRequestConfig {
-  skipErrorHandler?: boolean
-  getResponse?: boolean
-  requestInterceptors?: IRequestInterceptorTuple[]
-  responseInterceptors?: IResponseInterceptorTuple[]
-  [key: string]: any
+export enum EResponseCode {
+  SUCCESS = 200,
 }
-
-interface IRequest {
-  <T>(url: string, opts?: IRequestOptions): Promise<T>
-}
-
-interface IUpload<T = any, D = any> {
-  (url: string, data: D, opts?: IRequestOptions): Promise<T>
-}
-
-interface IErrorHandler {
-  (error: RequestError, opts: IRequestOptions): void
-}
-
-type IRequestInterceptor = (
-  config: IRequestOptions & InternalAxiosRequestConfig
-) => IRequestOptions & InternalAxiosRequestConfig
-type IResponseInterceptor = (response: AxiosResponse) => AxiosResponse
-type IErrorInterceptor = (error: AxiosError) => Promise<AxiosError>
-
-type IRequestInterceptorTuple = [IRequestInterceptor, IErrorInterceptor] | [IRequestInterceptor] | IRequestInterceptor
-type IResponseInterceptorTuple =
-  | [IResponseInterceptor, IErrorInterceptor]
-  | [IResponseInterceptor]
-  | IResponseInterceptor
 
 interface RequestConfig<T = any> extends AxiosRequestConfig {
   errorConfig?: {
@@ -143,7 +114,7 @@ class AxiosRequest {
    * @param url 接口地址
    * @param opts 请求参数
    */
-  request: IRequest = (url: string, opts = { method: 'GET' }) => {
+  request: IRequest = (url: string, opts = { method: 'GET' } as any) => {
     const { getResponse = false, requestInterceptors, responseInterceptors } = opts
     const { requestInterceptorsToEject, responseInterceptorsToEject } = this.getInterceptorsEject({
       requestInterceptors,
@@ -162,9 +133,11 @@ class AxiosRequest {
             const handler = this.config && this.config.errorConfig && this.config.errorConfig.errorHandler
             if (handler) handler(error, opts)
           } catch (e) {
-            reject(e)
+            resolve(e)
           } finally {
-            reject(error) // 如果不想把错误传递到方法调用处的话就去掉这个 finally
+            console.log(error, 'error')
+
+            resolve(error) // 如果不想把错误传递到方法调用处的话就去掉这个 finally
           }
         })
     })
@@ -208,7 +181,7 @@ class AxiosRequest {
    * @param url 资源地址
    * @param opts 请求参数
    */
-  download: IRequest = (url: string, opts = {}) => {
+  download: IRequest = (url: string, opts = {} as any) => {
     opts.responseType = opts.responseType ?? 'blob'
     const { getResponse = false, requestInterceptors, responseInterceptors } = opts
     const { requestInterceptorsToEject, responseInterceptorsToEject } = this.getInterceptorsEject({
@@ -242,14 +215,3 @@ const request = requestInstance.request
 const upload = requestInstance.upload
 const download = requestInstance.download
 export { requestInstance, request, upload, download }
-export type {
-  AxiosInstance,
-  AxiosRequestConfig,
-  AxiosResponse,
-  RequestError,
-  RequestConfig,
-  IResponseInterceptor as ResponseInterceptor,
-  IRequestOptions as RequestOptions,
-  IRequest as Request,
-  IUpload as Upload,
-}

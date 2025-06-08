@@ -27,7 +27,7 @@ const LuomaMoments: FunctionComponent<Props> = ({ size, color, style: _style, ..
 };
 
 LuomaMoments.defaultProps = {
-  size: 45,
+  size: 46,
 };
 
 export default LuomaMoments;

@@ -5,7 +5,7 @@ import React, { FunctionComponent } from 'react';
 import Taro from '@tarojs/taro';
 import Icon from './rn';
 
-export type IconNames = 'moments' | 'mine' | 'magazine';
+export type IconNames = 'icon' | 'moments' | 'mine' | 'magazine';
 
 interface Props {
   name: IconNames;
@@ -22,7 +22,7 @@ const IconFont: FunctionComponent<Props> = (props) => {
 };
 
 IconFont.defaultProps = {
-  size: 45,
+  size: 46,
 };
 
 export default IconFont;

@@ -19,7 +19,7 @@
     "css": "sass"
   },
   "scripts": {
-    "build:weapp": "taro build --type weapp",
+    "build:weapp": "set NODE_ENV=production && taro build --type weapp",
     "build:swan": "taro build --type swan",
     "build:alipay": "taro build --type alipay",
     "build:tt": "taro build --type tt",
@@ -49,9 +49,9 @@
   ],
   "dependencies": {
     "@babel/runtime": "^7.21.5",
-    "@nutui/icons-react-taro": "^0.0.1",
+    "@nutui/icons-react-taro": "^3.0.1",
     "@nutui/nutui-react": "^3.0.13",
-    "@nutui/nutui-react-taro": "^2.7.14",
+    "@nutui/nutui-react-taro": "^3.0.13",
     "@tarojs/components": "3.6.18",
     "@tarojs/helper": "3.6.18",
     "@tarojs/plugin-framework-react": "3.6.18",

@@ -23,7 +23,7 @@ let LuomaMine: FunctionComponent<Props> = ({ size, color, ...rest }) => {
 };
 
 LuomaMine.defaultProps = {
-  size: 45,
+  size: 46,
 };
 
 LuomaMine = React.memo ? React.memo(LuomaMine) : LuomaMine;

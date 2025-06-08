@@ -1,6 +1,6 @@
 import { memo, useEffect, useState } from 'react'
 import { Tabbar } from '@nutui/nutui-react-taro'
-import { IconFont } from '@nutui/icons-react-taro'
+import { Message, Store } from '@nutui/icons-react-taro'
 import { default as IconLM } from '../icons'
 import Taro from '@tarojs/taro'
 
@@ -14,14 +14,14 @@ export const tabList = [
     path: '/factory',
     text: '厂家',
     iconRender: (isActive: boolean) => {
-      return <IconFont name="shop" className={isActive ? ['nut-icon-am-breathe'].join(' ') : ''}></IconFont>
+      return <Store className={isActive ? ['nut-icon-am-breathe'].join(' ') : ''}></Store>
     },
   },
   {
     path: '/message',
     text: '消息',
     iconRender: (isActive: boolean) => {
-      return <IconFont name="message" className={isActive ? ['nut-icon-am-breathe'].join(' ') : ''}></IconFont>
+      return <Message className={isActive ? ['nut-icon-am-breathe'].join(' ') : ''}></Message>
     },
   },
   {
@@ -101,7 +101,12 @@ export const TabBar = memo(() => {
   }
 
   return (
-    <Tabbar fixed value={tab} onSwitch={handleSwitch}>
+    <Tabbar
+      fixed
+      value={tab}
+      onSwitch={handleSwitch}
+      style={{ ['--nutui-tabbar-box-shadow']: '0 1px 4px 0 rgb(0 0 0 / 0.1)', ['--nutui-tabbar-height']: '70px' } as any}
+    >
       {tabList.map((item, index) => {
         return (
           <Tabbar.Item

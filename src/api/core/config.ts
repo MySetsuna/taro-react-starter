@@ -1,5 +1,6 @@
 import type { AxiosError, AxiosResponse } from 'axios'
-import type { RequestConfig } from './http'
+import Taro from '@tarojs/taro'
+import { RequestConfig } from 'types/http'
 
 // 错误处理方案：错误类型
 enum ErrorShowType {
@@ -67,6 +68,10 @@ function responseStatusHandler(error: AxiosError) {
     }
   } else {
     console.error(error.message)
+    Taro.showToast({
+      title: '网络异常',
+      icon: 'error',
+    })
   }
 }
 

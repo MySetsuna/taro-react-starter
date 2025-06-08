@@ -23,7 +23,7 @@ let LuomaMoments: FunctionComponent<Props> = ({ size, color, ...rest }) => {
 };
 
 LuomaMoments.defaultProps = {
-  size: 45,
+  size: 46,
 };
 
 LuomaMoments = React.memo ? React.memo(LuomaMoments) : LuomaMoments;
