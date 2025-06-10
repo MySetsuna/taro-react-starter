@@ -1,12 +1,13 @@
 export interface IWechatLoginParams {
-  readonly clientId: 'be7052a7e4f802c20df10a8d131adb12'
+  readonly clientId: string
   readonly grantType: 'xcx'
   readonly tenantId: '000000'
   readonly code: ''
   readonly uuid: ''
-  readonly appid: 'wxda63215f19af7717'
+  readonly appid: string
   readonly xcxCode: string
   readonly userType: 'app_user'
+  readonly [key: string]: any
 }
 
 export interface IWechatLoginOptions {
@@ -14,16 +15,22 @@ export interface IWechatLoginOptions {
   readonly method: 'POST'
 }
 
+export interface ISMSLoginOptions {
+  readonly data: ISMSLoginParams
+  readonly method: 'POST'
+}
+
 export interface ISMSLoginParams {
-  readonly clientId: 'be7052a7e4f802c20df10a8d131adb12'
+  readonly clientId: string
   readonly grantType: 'sms'
   readonly tenantId: '000000'
   readonly code: ''
   readonly uuid: ''
-  readonly appid: 'wxda63215f19af7717'
-  readonly phonenumber: '17872612922'
+  readonly appid: string
+  readonly phonenumber: string
   readonly smsCode: string
   readonly userType: 'app_user'
+  readonly [key: string]: any
 }
 
 export interface ILoginInfo {

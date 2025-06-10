@@ -7,8 +7,9 @@ import { default as IconLM } from '@/icons'
 import { useNavTitle } from '@/hooks'
 import { useEffect, useState } from 'react'
 import Taro from '@tarojs/taro'
-import { ILoginInfo, IWechatLoginOptions } from 'types/login'
+import { ILoginInfo, ISMSLoginOptions, IWechatLoginOptions } from 'types/login'
 import { IDataResponse } from 'types/http'
+import { log } from 'console'
 
 const Login = () => {
   const setToken = useUserStore.use.setToken()
@@ -18,8 +19,11 @@ const Login = () => {
   const setLoginInfo = useUserStore.use.setLoginInfo()
 
   const [isLoading, setIsLoading] = useState<boolean>(false)
-
   const [isUserUpdated, setIsUserUpdated] = useState<boolean>(false)
+
+  const [phone, setPhone] = useState('')
+  const [code, setCode] = useState('')
+  const [countdown, setCountdown] = useState(0)
 
   const navigate = useNavigate()
   const login = async () => {
@@ -32,7 +36,50 @@ const Login = () => {
     navigate(lastTab === '/mine' ? '/factory' : lastTab)
   }
 
-  const wechatLogin = async () => {
+  // 获取验证码
+  const handleGetCode = async () => {
+    if (!/^1\d{10}$/.test(phone)) {
+      Taro.showToast({ title: '请输入正确手机号', icon: 'none' })
+      return
+    }
+    // await request<any>('/api/send-code', { method: 'POST', data: { phone } })
+    setCountdown(60)
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+  // 手机号+验证码登录
+  const handlePhoneLogin = async () => {
+    if (!/^1\d{10}$/.test(phone) || !code) {
+      Taro.showToast({ title: '请填写完整信息', icon: 'none' })
+      return
+    }
+    const result = await request<IDataResponse<ILoginInfo>, ISMSLoginOptions>('/api/phone-login', {
+      method: 'POST',
+      data: {
+        clientId: process.env.TARO_APP_CLIENT_ID,
+        grantType: 'sms',
+        tenantId: '000000',
+        code: '',
+        uuid: '',
+        appid: process.env.TARO_APP_ID,
+        phonenumber: phone,
+        smsCode: code,
+        userType: 'app_user',
+      },
+    })
+    setToken(result.data.access_token)
+    navigate(lastTab === '/mine' ? '/factory' : lastTab)
+  }
+
+  const wechatLogin = async (phonenumber?: number) => {
     try {
       setIsLoading(true)
       const { code, ...rest } = await Taro.login()
@@ -41,12 +88,13 @@ const Login = () => {
       const res = await request<IDataResponse<ILoginInfo>, IWechatLoginOptions>('/auth/login', {
         method: 'POST',
         data: {
-          clientId: 'be7052a7e4f802c20df10a8d131adb12',
+          clientId: process.env.TARO_APP_CLIENT_ID,
           grantType: 'xcx',
           tenantId: '000000',
           code: '',
           uuid: '',
-          appid: 'wxda63215f19af7717',
+          appid: process.env.TARO_APP_ID,
+          phonenumber: phone,
           xcxCode: code,
           userType: 'app_user',
         },
@@ -76,7 +124,8 @@ const Login = () => {
     }
   }
   useEffect(() => {
-    Taro.getUserInfo().then((res) => {
+    Taro.getUserProfile({ desc: '用于完善会员资料' }).then((res) => {
+      console.log(res, 'res')
       setUserInfo(res.userInfo)
       setIsUserUpdated(true)
     })
@@ -85,15 +134,18 @@ const Login = () => {
   return (
     <View className="login flex flex-col justify-center items-center p-2">
       <View className="phone-number-login login flex flex-col justify-center items-center flex-auto w-full">
-        <View className="login-input">
-          <Input placeholder="请输入手机号" />
+        <View className="login-input phone-number">
+          <Input placeholder="请输入手机号" value={phone} onInput={(e) => setPhone(e.detail.value)} />
         </View>
-        <View className="login-input">
-          <Input placeholder="请输入验证码" />
+        <View className="login-input code flex items-center">
+          <Input placeholder="请输入验证码" value={code} onInput={(e) => setCode(e.detail.value)} />
+          <Button size="small" disabled={countdown > 0} onClick={handleGetCode}>
+            {countdown > 0 ? `${countdown}s后重试` : '获取验证码'}
+          </Button>
         </View>
         <View className="login-btn">
-          <Button type="primary" onClick={login}>
-            登录/注册
+          <Button type="primary" onClick={handlePhoneLogin}>
+            手机号快捷登录/注册
           </Button>
         </View>
       </View>
@@ -101,7 +153,20 @@ const Login = () => {
       <View className="wechat-login login flex flex-col justify-center items-center flex-auto w-full">
         {userInfo && <Avatar size={'70px'} src={userInfo.avatarUrl} className=" mt-2" />}
         <View className=" mt-3">
-          <Button color="#07c160" onClick={wechatLogin}>
+          <Button
+            color="#07c160"
+            // onClick={wechatLogin}
+            openType="getPhoneNumber"
+            onGetPhoneNumber={(e) => {
+              if (e.detail) {
+                console.log(e.detail, 'e.detail')
+                wechatLogin()
+                // wechatLogin(e.detail.iv)
+              } else {
+                wechatLogin()
+              }
+            }}
+          >
             <View className=" flex items-center justify-center w-full gap-1">
               <IconLM name="icon" color="white" size={35} />
               <View>微信登录</View>

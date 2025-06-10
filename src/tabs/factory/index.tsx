@@ -96,6 +96,24 @@ function Factory() {
     setLocationValue(value)
   }
 
+  const getWrapperHeight = useCallback(() => {
+    return new Promise<number>((resolve) => {
+      let wrapperHeight = 600
+      const fullHeight = Taro.getWindowInfo().windowHeight
+      const query = Taro.createSelectorQuery()
+      query.select('#factory-header').boundingClientRect()
+      query.select('.nut-tabbar').boundingClientRect()
+      query.exec((res) => {
+        if (res) {
+          const headerHeight = res[0].height
+          const tabbarHeight = res[1].height
+          wrapperHeight = fullHeight - headerHeight - tabbarHeight
+        }
+        resolve(wrapperHeight)
+      })
+    })
+  }, [])
+
   const fetchFactoryList = useCallback(async () => {
     const data = await request<IRowsResponse<IFactory>>('/app/tenant/list', {
       method: 'GET',
@@ -116,38 +134,18 @@ function Factory() {
 
   const debouncedSearch = useDebounce(fetchFactoryList, 300)
 
-  const onSearch = (value: string) => {
-    setSearchValue(value)
-  }
-
-  const getWrapperHeight = useCallback(() => {
-    return new Promise<number>((resolve) => {
-      let wrapperHeight = 600
-      const fullHeight = Taro.getWindowInfo().windowHeight
-      const query = Taro.createSelectorQuery()
-      query.select('#factory-header').boundingClientRect()
-      query.select('.nut-tabbar').boundingClientRect()
-      query.exec((res) => {
-        if (res) {
-          const headerHeight = res[0].height
-          const tabbarHeight = res[1].height
-          wrapperHeight = fullHeight - headerHeight - tabbarHeight
-        }
-        resolve(wrapperHeight)
-      })
-    })
-  }, [])
+  useEffect(() => {
+    debouncedSearch()
+  }, [locationValue, searchValue, currentCategory])
 
   useEffect(() => {
     fetchCategoryList()
     fetchAreaData()
-  }, [])
-
-  useEffect(() => {
     getWrapperHeight().then((height) => {
       setWrapperHeight(height)
     })
   }, [])
+
 
   return (
     <>
@@ -164,11 +162,7 @@ function Factory() {
           </View>
           <View className="flex items-center w-full justify-start relative">
             <SearchBar
-              onChange={(val: string) => onSearch(val)}
-              onSearch={() => {
-                debouncedSearch.cancel()
-                debouncedSearch()
-              }}
+              onSearch={setSearchValue}
               shape="round"
               style={{ ['--nutui-searchbar-input-height']: '38PX' } as any}
             />

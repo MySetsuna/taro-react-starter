@@ -8,6 +8,7 @@ import './index.scss'
 import { View } from '@tarojs/components'
 import { useLocation, useNavigate } from 'react-router'
 import { useUserStore } from '@/models'
+import { TABBAR_HEIGHT } from '@/config'
 
 export const tabList = [
   {
@@ -105,7 +106,12 @@ export const TabBar = memo(() => {
       fixed
       value={tab}
       onSwitch={handleSwitch}
-      style={{ ['--nutui-tabbar-box-shadow']: '0 1px 4px 0 rgb(0 0 0 / 0.1)', ['--nutui-tabbar-height']: '70px' } as any}
+      style={
+        {
+          ['--nutui-tabbar-box-shadow']: '0 1px 4px 0 rgb(0 0 0 / 0.1)',
+          ['--nutui-tabbar-height']: `${TABBAR_HEIGHT}px`,
+        } as any
+      }
     >
       {tabList.map((item, index) => {
         return (
