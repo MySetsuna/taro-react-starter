@@ -1,8 +1,10 @@
+import Taro from '@tarojs/taro'
+
 interface AnyObj {
   [key: string]: any
 }
 const { getPrototypeOf } = Object
-const kindOf = (cache => (thing: any) => {
+const kindOf = ((cache) => (thing: any) => {
   const str = toString.call(thing)
   return cache[str] || (cache[str] = str.slice(8, -1).toLowerCase())
 })(Object.create(null))
@@ -18,14 +20,12 @@ function findKey(obj: object, key: string) {
   let _key
   while (i-- > 0) {
     _key = keys[i]
-    if (key === _key.toLowerCase())
-      return _key
+    if (key === _key.toLowerCase()) return _key
   }
   return null
 }
 const _global = (() => {
-  if (typeof globalThis !== 'undefined')
-    return globalThis
+  if (typeof globalThis !== 'undefined') return globalThis
   return typeof self !== 'undefined' ? self : typeof window !== 'undefined' ? window : global
 })()
 
@@ -33,15 +33,25 @@ const singletonEnforcer = Symbol('Utils')
 // 助手函数写这里
 class Utils {
   private static _instance: Utils
+  public imSdk: any
   constructor(enforcer: any) {
-    if (enforcer !== singletonEnforcer)
-      throw new Error('Cannot initialize single instance')
+    if (enforcer !== singletonEnforcer) throw new Error('Cannot initialize single instance')
   }
 
   static get instance() {
     // 如果已经存在实例则直接返回, 否则实例化后返回
     this._instance || (this._instance = new Utils(singletonEnforcer))
     return this._instance
+  }
+
+  setIMSDK = (sdk: any) => {
+    Taro.eventCenter.trigger('imSdkReady', true)
+    this.imSdk = sdk
+  }
+
+  onIMSDKReady = (cb: () => void) => {
+    if (this.imSdk) cb()
+    else Taro.eventCenter.on('imSdkReady', cb)
   }
 
   /** @description 是否为数组 */
@@ -83,35 +93,32 @@ class Utils {
   /** @description 是否为 Buffer 对象 */
   isBuffer(val: any) {
     return (
-      val !== null
-      && !this.isUndefined(val)
-      && val.constructor !== null
-      && !this.isUndefined(val.constructor)
-      && this.isFunction(val.constructor.isBuffer)
-      && val.constructor.isBuffer(val)
+      val !== null &&
+      !this.isUndefined(val) &&
+      val.constructor !== null &&
+      !this.isUndefined(val.constructor) &&
+      this.isFunction(val.constructor.isBuffer) &&
+      val.constructor.isBuffer(val)
     )
   }
 
   /** @description 是否为 ArrayBuffer 对象 */
   isArrayBufferView(val: any): boolean {
     let result
-    if (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView)
-      result = ArrayBuffer.isView(val)
-    else
-      result = val && val.buffer && this.isArrayBuffer(val.buffer)
+    if (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView) result = ArrayBuffer.isView(val)
+    else result = val && val.buffer && this.isArrayBuffer(val.buffer)
 
     return result
   }
 
   /** @description 是否为 plain object */
   isPlainObject = (val: any) => {
-    if (kindOf(val) !== 'object')
-      return false
+    if (kindOf(val) !== 'object') return false
     const prototype = getPrototypeOf(val)
     return (
-      (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null)
-      && !(Symbol.toStringTag in val)
-      && !(Symbol.iterator in val)
+      (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) &&
+      !(Symbol.toStringTag in val) &&
+      !(Symbol.iterator in val)
     )
   }
 
@@ -119,31 +126,31 @@ class Utils {
   isFormData = (thing: any) => {
     let kind
     return (
-      thing
-      && ((typeof FormData === 'function' && thing instanceof FormData)
-      || (this.isFunction(thing.append)
-      && ((kind = kindOf(thing)) === 'formdata'
-      // detect form-data instance
-      || (kind === 'object' && this.isFunction(thing.toString) && thing.toString() === '[object FormData]'))))
+      thing &&
+      ((typeof FormData === 'function' && thing instanceof FormData) ||
+        (this.isFunction(thing.append) &&
+          ((kind = kindOf(thing)) === 'formdata' ||
+            // detect form-data instance
+            (kind === 'object' && this.isFunction(thing.toString) && thing.toString() === '[object FormData]'))))
     )
   }
 
   /** @description 是否为 FormData 对象 */
   isSpecCompliantForm(thing: any) {
     return !!(
-      thing
-      && this.isFunction(thing.append)
-      && thing[Symbol.toStringTag] === 'FormData'
-      && thing[Symbol.iterator]
+      thing &&
+      this.isFunction(thing.append) &&
+      thing[Symbol.toStringTag] === 'FormData' &&
+      thing[Symbol.iterator]
     )
   }
 
   /** @description 是否有 then 方法 */
   isThenable = (thing: any) =>
-    thing
-    && (this.isObject(thing) || this.isFunction(thing))
-    && this.isFunction(thing.then)
-    && this.isFunction(thing.catch)
+    thing &&
+    (this.isObject(thing) || this.isFunction(thing)) &&
+    this.isFunction(thing.then) &&
+    this.isFunction(thing.catch)
 
   /** @description 是否绝对地址 */
   isAbsoluteURL(url: string) {
@@ -154,8 +161,7 @@ class Utils {
   trim = (str: string) => (str.trim ? str.trim() : str.replace(/^\s+|\s+$/g, ''))
   /** @description 去除字符串中的 BOM */
   stripBOM = (content: string) => {
-    if (content.charCodeAt(0) === 0xFEFF)
-      content = content.slice(1)
+    if (content.charCodeAt(0) === 0xfeff) content = content.slice(1)
 
     return content
   }
@@ -170,8 +176,8 @@ class Utils {
   /** @description 判断对象是否有某属性 */
   hasOwnProperty = (
     ({ hasOwnProperty }) =>
-      (obj: object, prop: string) =>
-        hasOwnProperty.call(obj, prop)
+    (obj: object, prop: string) =>
+      hasOwnProperty.call(obj, prop)
   )(Object.prototype)
 
   /** @description 把baseURL和relativeURL组合起来 */
@@ -181,36 +187,27 @@ class Utils {
 
   /** @description 将类数组对象转为真正的数组 */
   toArray = (thing: any) => {
-    if (!thing)
-      return null
-    if (this.isArray(thing))
-      return thing
+    if (!thing) return null
+    if (this.isArray(thing)) return thing
     let i = thing.length
-    if (!this.isNumber(i))
-      return null
+    if (!this.isNumber(i)) return null
     const arr = new Array(i)
-    while (i-- > 0)
-      arr[i] = thing[i]
+    while (i-- > 0) arr[i] = thing[i]
 
     return arr
   }
 
   /** @description 迭代数组或对象 */
   forEach(obj: AnyObj | Array<any>, fn: (...args: any[]) => void) {
-    if (obj === null || typeof obj === 'undefined')
-      return
+    if (obj === null || typeof obj === 'undefined') return
 
-    if (typeof obj !== 'object')
-      obj = [obj]
+    if (typeof obj !== 'object') obj = [obj]
 
     if (this.isArray(obj)) {
-      for (let i = 0, l = obj.length; i < l; i++)
-        fn.call(null, obj[i], i, obj)
-    }
-    else {
+      for (let i = 0, l = obj.length; i < l; i++) fn.call(null, obj[i], i, obj)
+    } else {
       for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key))
-          fn.call(null, obj[key], key, obj)
+        if (Object.prototype.hasOwnProperty.call(obj, key)) fn.call(null, obj[key], key, obj)
       }
     }
   }
@@ -224,29 +221,24 @@ class Utils {
       const targetKey = (caseless && findKey(result, key)) || key
       if (this.isPlainObject(result[targetKey]) && this.isPlainObject(val))
         result[targetKey] = this.merge(result[targetKey], val)
-      else if (this.isPlainObject(val))
-        result[targetKey] = this.merge({}, val)
-      else if (this.isArray(val))
-        result[targetKey] = val.slice()
-      else
-        result[targetKey] = val
+      else if (this.isPlainObject(val)) result[targetKey] = this.merge({}, val)
+      else if (this.isArray(val)) result[targetKey] = val.slice()
+      else result[targetKey] = val
     }
 
-    for (let i = 0, l = arguments.length; i < l; i++)
-      args[i] && this.forEach(args[i], assignValue)
+    for (let i = 0, l = arguments.length; i < l; i++) args[i] && this.forEach(args[i], assignValue)
 
     return result
   }
 
   /** @description 将文件对象转为URL */
   readBlob2Url = (blob: Blob, cb: (url: any) => void) => {
-    if (!this.isBlob(blob))
-      throw new Error('is not Blob')
+    if (!this.isBlob(blob)) throw new Error('is not Blob')
 
     new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.onload = () => resolve(reader.result)
-      reader.onerror = error => reject(error)
+      reader.onerror = (error) => reject(error)
       reader.readAsDataURL(blob)
     }).then(cb)
   }
@@ -264,17 +256,13 @@ class Utils {
 
   /** @description 深拷贝 */
   deepClone = (source: any, cache = new WeakMap()) => {
-    if (typeof source !== 'object' || source === null)
-      return source
-    if (cache.has(source))
-      return cache.get(source)
+    if (typeof source !== 'object' || source === null) return source
+    if (cache.has(source)) return cache.get(source)
     const target = Array.isArray(source) ? [] : {}
     Reflect.ownKeys(source).forEach((key) => {
       const val = source[key]
-      if (typeof val === 'object' && val !== null)
-        target[key] = this.deepClone(val, cache)
-      else
-        target[key] = val
+      if (typeof val === 'object' && val !== null) target[key] = this.deepClone(val, cache)
+      else target[key] = val
     })
     return target
   }

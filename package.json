@@ -19,7 +19,7 @@
     "css": "sass"
   },
   "scripts": {
-    "build:weapp": "set NODE_ENV=production && taro build --type weapp",
+    "build:weapp": "taro build --type weapp",
     "build:swan": "taro build --type swan",
     "build:alipay": "taro build --type alipay",
     "build:tt": "taro build --type tt",
@@ -75,6 +75,8 @@
     "react-dom": "^18.0.0",
     "react-router": "6.30.1",
     "react-router-dom": "6.30.1",
+    "tim-upload-plugin": "^1.4.2",
+    "tim-wx-sdk": "^2.27.6",
     "zustand": "4.4.6"
   },
   "devDependencies": {

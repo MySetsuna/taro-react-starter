@@ -89,6 +89,12 @@ importers:
       react-router-dom:
         specifier: 6.30.1
         version: 6.30.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      tim-upload-plugin:
+        specifier: ^1.4.2
+        version: 1.4.2
+      tim-wx-sdk:
+        specifier: ^2.27.6
+        version: 2.27.6
       zustand:
         specifier: 4.4.6
         version: 4.4.6(@types/react@18.3.23)(immer@10.0.3)(react@18.3.1)
@@ -8713,6 +8719,12 @@ packages:
 
   thunky@1.1.0:
     resolution: {integrity: sha512-eHY7nBftgThBqOyHGVN+l8gF0BucP09fMo0oO/Lb0w1OF80dJv+lDVpXG60WMQvkcxAkNybKsrEIE3ZtKGmPrA==}
+
+  tim-upload-plugin@1.4.2:
+    resolution: {integrity: sha512-ERhcRcSxr6YV4Ri1LBTclcruWVW2Z+tOLTaBkJ9FEoUzo1XNGxT5esl3NENEthBTWwqSlCwb6vK7Ef91uJ7ZLw==}
+
+  tim-wx-sdk@2.27.6:
+    resolution: {integrity: sha512-zB+eRdmigdhEDeqrXC0bLJonUQZzS5uKNPLFtrje503WAnmuxVQjq/n4Zle4FYHG4FiKHKhsrVd0aCYXABlFEg==}
 
   timed-out@4.0.1:
     resolution: {integrity: sha512-G7r3AhovYtr5YKOWQkta8RKAPb+J9IsO4uVmzjl8AZwfhs8UcUwTiD6gcJYSgOtzyjvQKrKYn41syHbUWMkafA==}
@@ -20158,6 +20170,10 @@ snapshots:
   through@2.3.8: {}
 
   thunky@1.1.0: {}
+
+  tim-upload-plugin@1.4.2: {}
+
+  tim-wx-sdk@2.27.6: {}
 
   timed-out@4.0.1: {}
 

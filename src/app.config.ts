@@ -12,6 +12,18 @@ export default defineAppConfig({
     navigationBarTitleText: '广告制作',
     navigationBarTextStyle: 'black',
   },
+  subPackages: [
+    {
+      root: 'im-sdk',
+      pages: ['pages/blank/index'],
+    },
+  ],
+  preloadRule: {
+    'pages/index/index': {
+      network: 'all',
+      packages: ['im-sdk'],
+    },
+  },
   // tabBar: {
   //   custom: true,
   //   list: [

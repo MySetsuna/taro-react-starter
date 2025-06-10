@@ -5,6 +5,20 @@ export interface IResponse {
   readonly msg: string
 }
 
+export interface IPostOptions<T = any> {
+  readonly method: 'POST'
+  readonly data: T
+}
+
+export interface IGetOptionsWithoutParams {
+  readonly method: 'GET'
+}
+
+export interface IGetOptions<T = any> {
+  readonly method: 'GET'
+  readonly params: T
+}
+
 export interface IDataResponse<T = any> extends IResponse {
   readonly data: T
 }

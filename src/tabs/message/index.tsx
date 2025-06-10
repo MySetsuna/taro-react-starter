@@ -1,13 +1,68 @@
 import { View } from '@tarojs/components'
-import { useLoad } from '@tarojs/taro'
+import Taro, { useLoad } from '@tarojs/taro'
 import { Image } from '@nutui/nutui-react-taro'
 import { TabBar } from '@/tab-bar'
-import { useTabBar } from '@/hooks/useTabBar'
+import { useImStore, useUserStore } from '@/models'
+import { useCallback, useEffect } from 'react'
+import { IDataResponse, IGetOptionsWithoutParams, IGetOptions, IPostOptions, IResponse } from 'types/http'
+import { IIMUserInfo } from 'types/im'
+import { request } from '@/api'
+import { utils } from '@/libs'
 
 function Message() {
-  useLoad(() => {
-    console.log('Message page loaded.')
-  })
+  const token = useUserStore.use.token()
+  const setIMUserInfo = useUserStore.use.setIMUserInfo()
+  const IMUserInfo = useUserStore.use.IMUserInfo()
+  const isSDKReady = useImStore.use.isSDKReady()
+
+  const getImUserInfo = useCallback(async () => {
+    const res = await request<IDataResponse<IIMUserInfo>, IGetOptionsWithoutParams>('/im/userSig', {
+      method: 'GET',
+    })
+    console.log(res, 'getImUserInfo')
+    setIMUserInfo(res.data)
+  }, [token])
+  useEffect(() => {
+    getImUserInfo()
+  }, [getImUserInfo])
+
+  useEffect(() => {
+    console.log(isSDKReady, 'isSDKReady  Taro.SubPackageTaro.SubPackageTaro.SubPackage')
+
+    if (IMUserInfo && isSDKReady) {
+      console.log(utils.imSdk, 'utils.imSdk')
+      utils.imSdk?.(
+        {
+          appId: IMUserInfo.appId,
+          userId: IMUserInfo.userId,
+          userSig: IMUserInfo.userSig,
+        },
+        {
+          onImLogin: (isImLogin: boolean) => {
+            console.log(isImLogin, 'isImLogin')
+          },
+          onSDKReady: (eventName: string) => {
+            console.log(eventName, 'eventName')
+          },
+          onSDKNotReady: (eventName: string) => {
+            console.log(eventName, 'eventName')
+          },
+          onMessage: (msg: any, msgList: any) => {
+            console.log(msg, 'msg', msgList)
+          },
+          onMessageReaded: (msg: any, msgList: any) => {
+            console.log(msg, 'msg', msgList)
+          },
+          onUpdateRoomNum: (num: number) => {
+            console.log(num, 'num')
+          },
+          onConversationList: (list: any) => {
+            console.log(list, 'list')
+          },
+        }
+      )
+    }
+  }, [IMUserInfo, isSDKReady])
 
   return (
     <>

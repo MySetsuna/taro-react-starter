@@ -4,6 +4,7 @@ import type { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, Inte
 import axios from 'axios'
 import requestConfig from './config'
 import { IErrorHandler, IRequest, IRequestInterceptorTuple, IResponseInterceptorTuple, IUpload } from 'types/http'
+import Taro from '@tarojs/taro'
 
 export enum EResponseCode {
   SUCCESS = 200,
@@ -29,6 +30,7 @@ class AxiosRequest {
     timeout: 10000,
     headers: {
       'Content-Type': 'application/json;charset=utf-8',
+      clientId: process.env.TARO_APP_CLIENT_ID,
     },
   }
 
@@ -58,6 +60,12 @@ class AxiosRequest {
     // 如果已经存在实例则直接返回, 否则实例化后返回
     this._instance || (this._instance = new AxiosRequest(singletonEnforcer))
     return this._instance
+  }
+
+  public setHeaders(params: { Authorization: string; clientId?: string }) {
+    this.service.defaults.headers.common = {
+      ...params,
+    }
   }
 
   /**

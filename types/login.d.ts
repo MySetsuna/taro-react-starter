@@ -1,3 +1,5 @@
+import { IPostOptions } from "./http"
+
 export interface IWechatLoginParams {
   readonly clientId: string
   readonly grantType: 'xcx'
@@ -10,12 +12,11 @@ export interface IWechatLoginParams {
   readonly [key: string]: any
 }
 
-export interface IWechatLoginOptions {
+export interface IWechatLoginOptions extends IPostOptions<IWechatLoginParams> {
   readonly data: IWechatLoginParams
-  readonly method: 'POST'
 }
 
-export interface ISMSLoginOptions {
+export interface ISMSLoginOptions extends IPostOptions<ISMSLoginParams>{
   readonly data: ISMSLoginParams
   readonly method: 'POST'
 }
@@ -41,4 +42,12 @@ export interface ILoginInfo {
   readonly expire_in: number
   readonly refresh_expire_in: number
   readonly client_id: string
+}
+
+export interface IUserImInfo {
+  readonly userId: string
+  readonly userSig: string
+  readonly expireAt: number
+  readonly expireTime: number
+  readonly appId: number
 }

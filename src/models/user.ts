@@ -6,6 +6,7 @@ import { IDataResponse, IResponse } from 'types/http'
 import { EResponseCode, request } from '@/api'
 import { ILoginInfo, IWechatLoginOptions } from 'types/login'
 import Taro from '@tarojs/taro'
+import { IIMUserInfo } from 'types/im'
 
 interface State {
   token: string
@@ -13,6 +14,7 @@ interface State {
   lastTab: string
   userInfo: Taro.UserInfo | null
   loginInfo: ILoginInfo | null
+  IMUserInfo: IIMUserInfo | null
 }
 interface Action {
   setToken: (token: string) => void
@@ -20,6 +22,7 @@ interface Action {
   setLastTab: (tab: string) => void
   setUserInfo: (userInfo: Taro.UserInfo) => void
   setLoginInfo: (userInfo: ILoginInfo) => void
+  setIMUserInfo: (userInfo: IIMUserInfo) => void
 }
 
 const initialState: State = {
@@ -28,6 +31,7 @@ const initialState: State = {
   lastTab: '',
   userInfo: null,
   loginInfo: null,
+  IMUserInfo: null,
 }
 const store = create<State & Action>()(
   persist(
@@ -37,6 +41,7 @@ const store = create<State & Action>()(
       lastTab: '',
       userInfo: null,
       loginInfo: null,
+      IMUserInfo: null,
       setLastTab: (tab) => set({ lastTab: tab }),
       setToken: (token) => set({ token, isLogged: true }),
       removeToken: async () => {
@@ -47,6 +52,7 @@ const store = create<State & Action>()(
       },
       setUserInfo: (userInfo) => set({ userInfo }),
       setLoginInfo: (loginInfo) => set({ loginInfo }),
+      setIMUserInfo: (IMUserInfo) => set({ IMUserInfo }),
     }),
     {
       // ! 注意这里的name是当前这个Zustand模块进行缓存时的唯一key, 每个需要缓存的Zustand模块都必须分配一个唯一key

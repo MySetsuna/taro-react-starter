@@ -67,7 +67,7 @@ const store = create<State & Action>()(
     }),
     {
       // ! 注意这里的name是当前这个Zustand模块进行缓存时的唯一key, 每个需要缓存的Zustand模块都必须分配一个唯一key
-      name: StorageSceneKey.USER,
+      name: StorageSceneKey.FACTORY,
       storage: createJSONStorage(() => zustandStorage),
     }
   )

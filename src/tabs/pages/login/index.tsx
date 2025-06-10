@@ -1,4 +1,4 @@
-import { EResponseCode, request } from '@/api'
+import { EResponseCode, request, requestInstance } from '@/api'
 import { useAuthStore, useRefeshTokenTimer, useUserStore } from '@/models'
 import { Avatar, Button, Divider, Loading, Overlay } from '@nutui/nutui-react-taro'
 import { Input, View } from '@tarojs/components'
@@ -101,6 +101,11 @@ const Login = () => {
       })
       console.log(res, 'resresres')
       if (EResponseCode.SUCCESS === res.code) {
+        const authorization = `Bearer ${res.data.access_token}`
+        requestInstance.setHeaders({
+          Authorization: authorization,
+          clientId: res.data.client_id,
+        })
         setToken(res.data.access_token)
         setLoginInfo(res.data)
         useRefeshTokenTimer(res.data.expire_in)
@@ -111,6 +116,7 @@ const Login = () => {
           console.log(userInfo, 'userInfo')
           setUserInfo(userInfo)
         }
+
         navigate(lastTab === '/mine' ? '/factory' : lastTab)
       } else {
         Taro.showToast({

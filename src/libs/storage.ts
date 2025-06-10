@@ -4,11 +4,13 @@ import type { StateStorage } from 'zustand/middleware'
 enum StorageSceneKey {
   USER = 'storage-user',
   AUTH = 'storage-auth',
+  FACTORY = 'storage-factory',
+  IM = 'storage-im',
 }
 
 function getItem<T = any>(key: string): T {
   const value = getStorageSync(key)
-  return value ? JSON.parse(value) ?? null : null
+  return value ? (JSON.parse(value) ?? null) : null
 }
 function setItem(key: string, value: any) {
   setStorageSync(key, JSON.stringify(value))
