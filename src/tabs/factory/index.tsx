@@ -17,10 +17,11 @@ import { useDebounce } from '@/hooks/common'
 import { EResponseCode, request } from '@/api'
 import { ICategory, IFactory } from 'types/module'
 import { IRowsResponse } from 'types/http'
-import { useFactoryStore } from '@/models/factory'
+import { useAreaOptions, useFactoryStore } from '@/models/factory'
 import Taro, { useDidShow, useLaunch } from '@tarojs/taro'
 import './index.scss'
 import { BackTop } from '@/components/back-top'
+import { useNavigate } from 'react-router'
 
 function Factory() {
   // value
@@ -41,38 +42,15 @@ function Factory() {
   const fetchCategoryList = useFactoryStore.use.fetchCategoryList()
   const fetchAreaData = useFactoryStore.use.fetchAreaData()
 
+  const navigate = useNavigate()
+
   const [isVisible, setIsVisible] = useState(false)
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [scrollTop, setScrollTop] = useState(0)
 
   const categoryList = useMemo(() => categorys.slice(), [categorys])
 
-  const options = useMemo(() => {
-    const options: Array<CascaderOption> = areaData.slice().map((item) => {
-      const children = item.children.map((child) => {
-        return {
-          value: child.value,
-          text: child.label,
-        }
-      })
-      if (children.length > 1) {
-        children.unshift({
-          value: -1,
-          text: '不限',
-        })
-      }
-      return {
-        value: item.value,
-        text: item.label,
-        children,
-      }
-    })
-    options.unshift({
-      value: -1,
-      text: '全国',
-    })
-    return options
-  }, [areaData])
+  const options = useAreaOptions(areaData)
 
   const displayLocatiopn = useMemo(() => {
     let displayLocatiopn = '全国'
@@ -105,8 +83,8 @@ function Factory() {
       query.select('.nut-tabbar').boundingClientRect()
       query.exec((res) => {
         if (res) {
-          const headerHeight = res[0].height
-          const tabbarHeight = res[1].height
+          const headerHeight = res[0]?.height ?? 0
+          const tabbarHeight = res[1]?.height ?? 0
           wrapperHeight = fullHeight - headerHeight - tabbarHeight
         }
         resolve(wrapperHeight)
@@ -146,7 +124,6 @@ function Factory() {
     })
   }, [])
 
-
   return (
     <>
       <View className="factory grid grid-rows-[58Px_1fr] h-[100vh]">
@@ -154,7 +131,7 @@ function Factory() {
           id="factory-header"
           className="factory-header flex items-center top-0 bg-white z-10 pl-2 pr-2 border-0 !border-b border-solid border-[#e2e2e2] fixed w-full h-[58Px] box-border"
         >
-          <View className="location flex items-center mr-1" onClick={() => setIsVisible(true)}>
+          <View className="location flex items-center mr-1 active:text-red-400" onClick={() => setIsVisible(true)}>
             <Location className="nut-icon-am-jump nut-icon-am-infinite" name="locationg3" />
             <View className="location-text leading-10 mr-1 ml-1 text-ellipsis overflow-hidden whitespace-nowrap w-12 text-sm">
               {displayLocatiopn}
@@ -162,6 +139,7 @@ function Factory() {
           </View>
           <View className="flex items-center w-full justify-start relative">
             <SearchBar
+              placeholder="搜索"
               onSearch={setSearchValue}
               shape="round"
               style={{ ['--nutui-searchbar-input-height']: '38PX' } as any}
@@ -198,7 +176,7 @@ function Factory() {
           <InfiniteLoading
             enhanced
             showScrollbar={false}
-            className="factory-list pl-2 overflow-y-auto overflow-x-hidden !h-[inherit]"
+            className="factory-list pl-2 pr-2 overflow-y-auto overflow-x-hidden !h-[inherit]"
             pullRefresh
             onRefresh={fetchFactoryList}
             scrollAnimationDuration="200"
@@ -222,7 +200,15 @@ function Factory() {
                       <View className="desc text-gray-400 text-xs leading-5 h-5 text-ellipsis overflow-hidden whitespace-nowrap">
                         {item.intro}
                       </View>
-                      <Button type="primary" size="mini" style={{ width: '50%' }}>
+                      <Button
+                        type="primary"
+                        size="mini"
+                        style={{ width: '50%' }}
+                        onClick={() => {
+                          const path = `/chat?sendId=${item.id}&companyName=${item.companyName}&type=GROUP&avatar=${item.backgroundImageUrl}`
+                          navigate(path)
+                        }}
+                      >
                         <View className="flex items-center leading-4 gap-1 ">
                           <View>去咨询</View>
                           <Message size={10} name="message" />
@@ -237,19 +223,19 @@ function Factory() {
             <BackTop isShow={scrollTop > 100} onToTop={() => setScrollTop(-1)} />
           </InfiniteLoading>
         </View>
-        <Cascader
-          visible={isVisible}
-          value={locationValue}
-          title="厂家地址"
-          options={options}
-          closeable
-          onClose={() => {
-            setIsVisible(false)
-          }}
-          onChange={onChange}
-          className="pb-5"
-        />
       </View>
+      <Cascader
+        visible={isVisible}
+        value={locationValue}
+        title="厂家地址"
+        options={options}
+        closeable
+        onClose={() => {
+          setIsVisible(false)
+        }}
+        onChange={onChange}
+        className="pb-5"
+      />
     </>
   )
 }

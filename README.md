@@ -26,3 +26,9 @@ pnpm dev:weapp
 - [TailwindCSS](https://tailwind.nodejs.cn/)
 - [ESLint](https://eslint.nodejs.cn/)
 - [Prettier](https://prettier.nodejs.cn/)
+
+
+```shell
+npx iconfont-init
+npx iconfont-taro 
+```

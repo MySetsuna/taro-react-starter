@@ -1,84 +1,198 @@
-import { View } from '@tarojs/components'
+import { ScrollView, Text, View } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
-import { Image } from '@nutui/nutui-react-taro'
+import { Avatar, Badge, Cascader, Empty, Image, Input, NavBar, SearchBar } from '@nutui/nutui-react-taro'
 import { TabBar } from '@/tab-bar'
-import { useImStore, useUserStore } from '@/models'
-import { useCallback, useEffect } from 'react'
+import { useAreaOptions, useFactoryStore, useImStore, useUserStore } from '@/models'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { IDataResponse, IGetOptionsWithoutParams, IGetOptions, IPostOptions, IResponse } from 'types/http'
 import { IIMUserInfo } from 'types/im'
 import { request } from '@/api'
 import { utils } from '@/libs'
+import { useNavigate } from 'react-router'
+import { ArrowLeft, Location, User } from '@nutui/icons-react-taro'
+import { TABBAR_HEIGHT } from '@/config'
+import { timeFormat } from '@/libs/time-method'
+import { useInterval } from '@/hooks'
+
+const ENPTY_USER_NAME = '未命名用户'
 
 function Message() {
-  const token = useUserStore.use.token()
-  const setIMUserInfo = useUserStore.use.setIMUserInfo()
-  const IMUserInfo = useUserStore.use.IMUserInfo()
-  const isSDKReady = useImStore.use.isSDKReady()
+  const navigate = useNavigate()
+  const conversationList = useImStore.use.conversationList()
+  const setConversationList = useImStore.use.setConversationList()
 
-  const getImUserInfo = useCallback(async () => {
-    const res = await request<IDataResponse<IIMUserInfo>, IGetOptionsWithoutParams>('/im/userSig', {
-      method: 'GET',
-    })
-    console.log(res, 'getImUserInfo')
-    setIMUserInfo(res.data)
-  }, [token])
-  useEffect(() => {
-    getImUserInfo()
-  }, [getImUserInfo])
+  const areaData = useFactoryStore.use.areaData()
+  const [locationValue, setLocationValue] = useState([-1])
 
-  useEffect(() => {
-    console.log(isSDKReady, 'isSDKReady  Taro.SubPackageTaro.SubPackageTaro.SubPackage')
+  const fullHeight = Taro.getWindowInfo().windowHeight
 
-    if (IMUserInfo && isSDKReady) {
-      console.log(utils.imSdk, 'utils.imSdk')
-      utils.imSdk?.(
-        {
-          appId: IMUserInfo.appId,
-          userId: IMUserInfo.userId,
-          userSig: IMUserInfo.userSig,
-        },
-        {
-          onImLogin: (isImLogin: boolean) => {
-            console.log(isImLogin, 'isImLogin')
-          },
-          onSDKReady: (eventName: string) => {
-            console.log(eventName, 'eventName')
-          },
-          onSDKNotReady: (eventName: string) => {
-            console.log(eventName, 'eventName')
-          },
-          onMessage: (msg: any, msgList: any) => {
-            console.log(msg, 'msg', msgList)
-          },
-          onMessageReaded: (msg: any, msgList: any) => {
-            console.log(msg, 'msg', msgList)
-          },
-          onUpdateRoomNum: (num: number) => {
-            console.log(num, 'num')
-          },
-          onConversationList: (list: any) => {
-            console.log(list, 'list')
-          },
+  // fetch
+  const fetchAreaData = useFactoryStore.use.fetchAreaData()
+
+  const [isVisible, setIsVisible] = useState(false)
+
+  const [now, setNow] = useState(new Date().getTime())
+
+  const options = useAreaOptions(areaData)
+
+  const displayLocatiopn = useMemo(() => {
+    let displayLocatiopn = '全国'
+    options.forEach((item: any) => {
+      if (item.value === locationValue[0]) {
+        if (locationValue[1] > 0) {
+          item.children.forEach((child: any) => {
+            if (child.value === locationValue[1]) {
+              displayLocatiopn = child.text
+            }
+          })
+        } else {
+          displayLocatiopn = item.text
         }
-      )
+      }
+    })
+    return displayLocatiopn
+  }, [locationValue, options])
+
+  console.log(conversationList, 'conversationList')
+  const [searchValue, setSearchValue] = useState('')
+
+  const msgDisplay = (item) => {
+    if (item.lastMessage.type === 'TIMTextElem') {
+      return item.lastMessage.payload.text
     }
-  }, [IMUserInfo, isSDKReady])
+  }
+
+  const avaDisplay = (nick) => {
+    if (nick) {
+      return nick[0] + (nick[1] ?? '')
+    }
+    return ''
+  }
+
+  const onChange = (value: any) => {
+    setLocationValue(value)
+  }
+
+  useEffect(() => {
+    fetchAreaData()
+  }, [])
+
+  useInterval(() => {
+    setNow(new Date().getTime())
+  }, 60 * 1000)
 
   return (
     <>
-      <View className="message">
-        <View className="message-list">
-          <View className="message-item">
-            <Image className="avatar" src="default-avatar.png" />
-            <View className="content">
-              <View className="title">智忠标牌厂</View>
-              <View className="preview">您好,请问有什么可以帮您?</View>
+      <View>
+        {/* <NavBar
+          back={
+            <View className=' flex items-center'>
+              <ArrowLeft />
+              <Badge value={10} />
             </View>
-            <View className="time">12:30</View>
+          }
+          onBackClick={() => {
+            Taro.navigateBack()
+          }}
+          title="消息"
+        >
+          <View>Taro UI</View>
+        </NavBar> */}
+        <View
+          id="message-header"
+          className="message-header flex items-center top-0 bg-white z-10 pl-2 pr-2 border-0 !border-b border-solid border-[#e2e2e2] fixed w-full h-[58Px] box-border"
+        >
+          <View className="location flex items-center mr-1 active:text-red-400" onClick={() => setIsVisible(true)}>
+            <Location className="nut-icon-am-jump nut-icon-am-infinite" name="locationg3" />
+            <View className="location-text leading-10 mr-1 ml-1 text-ellipsis overflow-hidden whitespace-nowrap w-12 text-sm">
+              {displayLocatiopn}
+            </View>
+          </View>
+          <View className="flex items-center w-full justify-start relative">
+            <SearchBar
+              placeholder="搜索"
+              onSearch={setSearchValue}
+              shape="round"
+              style={{ ['--nutui-searchbar-input-height']: '38PX' } as any}
+            />
           </View>
         </View>
+        <ScrollView
+          enhanced
+          showScrollbar={false}
+          style={{
+            height: `${fullHeight - TABBAR_HEIGHT - 58}px`,
+            position: 'fixed',
+            top: '58PX',
+          }}
+          scrollY
+        >
+          <View className="chat-c flex flex-col">
+            {conversationList.map((item) => {
+              if (item.type !== 'GROUP' && item.type !== 'C2C') {
+                return null
+              }
+              const isGroup = item.type === 'GROUP'
+              const avatar = isGroup ? item.groupProfile.avatar : item.userProfile.avatar
+              const nick = isGroup ? item.groupProfile.name.split('_')[0] : item.userProfile.nick || ENPTY_USER_NAME
+              const ava = avaDisplay(nick)
+              const sendId = isGroup ? item.groupProfile.groupID : item.userProfile.userID
+              const path = `/chat?sendId=${sendId}&companyName=${nick || ENPTY_USER_NAME}&type=${item.type}&conversationID=${item.conversationID}`
+              console.log(avatar,'avatar');
+
+              return (
+                <View
+                  className="chat-box flex items-center gap-2 w-full  active:bg-gray-100 p-2 pl-3 pr-3 box-border"
+                  onClick={() => navigate(path)}
+                >
+                  <Badge value={item.unreadCount}>
+                    <Avatar
+                      shape="square"
+                      size={50 as any}
+                      // 展示屏蔽，目前展示不出图片
+                      // src={avatar}
+                      icon={ava ? undefined : <User />}
+                      color="#ff0f23"
+                      background="#ffd6e1"
+                    >
+                      {/* {avatar ? '' : ava} */}
+                      {ava}
+                    </Avatar>
+                  </Badge>
+                  <View className=" flex items-center justify-between w-full h-[50Px] border-0 !border-b border-solid border-[#e2e2e2]">
+                    <View className="chat-r flex-auto flex flex-col gap-1 justify-start ">
+                      <View className="chat-name">{nick}</View>
+                      <View className="chat-text-bg text-sm text-gray-400 flex items-center gap-1 justify-start">
+                        <Image src="" className="tel-img " height={10} width={10}></Image>
+                        <View className=" flex-auto w-0 whitespace-nowrap text-ellipsis overflow-hidden">
+                          {msgDisplay(item)}
+                        </View>
+                      </View>
+                    </View>
+                    <View className="flex flex-col justify-between h-[50Px]">
+                      <View className="text-xs text-gray-300">{timeFormat(item.lastMessage.lastTime, now)}</View>
+                      {/* <View>{item.userProfile.location}</View> */}
+                    </View>
+                  </View>
+                </View>
+              )
+            })}
+            {!conversationList.length && <Empty description="暂无消息" />}
+          </View>
+        </ScrollView>
       </View>
-      <TabBar />
+      <Cascader
+        visible={isVisible}
+        value={locationValue}
+        title="厂家地址"
+        options={options}
+        closeable
+        onClose={() => {
+          setIsVisible(false)
+        }}
+        onChange={onChange}
+        className="pb-5"
+      />
     </>
   )
 }

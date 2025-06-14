@@ -7,7 +7,7 @@ import Taro from '@tarojs/taro'
 import './index.scss'
 import { View } from '@tarojs/components'
 import { useLocation, useNavigate } from 'react-router'
-import { useUserStore } from '@/models'
+import { useImStore, useUserStore } from '@/models'
 import { TABBAR_HEIGHT } from '@/config'
 
 export const tabList = [
@@ -64,7 +64,8 @@ export const TabBar = memo(() => {
   const [tab, setTab] = useState(-1)
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const setLastTab = useUserStore.use.setLastTab()
+
+  const conversationList = useImStore.use.conversationList()
 
   useEffect(() => {
     const index = tabList.findIndex((item) => pathname === item.path)
@@ -80,22 +81,23 @@ export const TabBar = memo(() => {
   const handleSwitch = (index: number) => {
     setTab(index)
     const item = tabList[index]
-    setLastTab(item.path)
     navigate(item.path)
   }
 
   const getValue = (path: string) => {
     switch (path) {
-      case '/factory':
-        return 0
+      // case '/factory':
+      //   return 0
       case '/message':
-        return 1
-      case '/moments':
-        return 2
-      case '/magazine':
-        return 3
-      case '/mine':
-        return 4
+        return conversationList.reduce((pre, cur) => {
+          return pre + cur.unreadCount
+        }, 0)
+      // case '/moments':
+      //   return 2
+      // case '/magazine':
+      //   return 3
+      // case '/mine':
+      //   return 4
       default:
         return undefined
     }
@@ -110,6 +112,7 @@ export const TabBar = memo(() => {
         {
           ['--nutui-tabbar-box-shadow']: '0 1px 4px 0 rgb(0 0 0 / 0.1)',
           ['--nutui-tabbar-height']: `${TABBAR_HEIGHT}px`,
+          zIndex: 9999999999,
         } as any
       }
     >

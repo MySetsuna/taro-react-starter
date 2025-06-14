@@ -1,7 +1,7 @@
 import { utils } from '@/libs'
-import { iminit_TIM } from '../../../libs/im'
+import { iminit_TIM, TIM_TYPES, TIM_EVENT } from '../../../libs/im'
 
-utils.setIMSDK(iminit_TIM)
+utils.setIMSDK(iminit_TIM, TIM_TYPES, TIM_EVENT)
 
 export default function Index() {
   return null

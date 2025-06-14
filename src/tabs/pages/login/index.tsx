@@ -13,7 +13,6 @@ import { log } from 'console'
 
 const Login = () => {
   const setToken = useUserStore.use.setToken()
-  const lastTab = useUserStore.use.lastTab()
   const userInfo = useUserStore.use.userInfo()
   const setUserInfo = useUserStore.use.setUserInfo()
   const setLoginInfo = useUserStore.use.setLoginInfo()
@@ -26,14 +25,26 @@ const Login = () => {
   const [countdown, setCountdown] = useState(0)
 
   const navigate = useNavigate()
+
   const login = async () => {
-    // const res = await request<any>('/api/login', {
-    //   method: 'POST',
-    // })
-    console.log('resresres')
+    const res = await request<IDataResponse<ILoginInfo>,ISMSLoginOptions>('/auth/login', {
+      method: 'POST',
+      data: {
+        userType: 'app_user',
+        clientId: process.env.TARO_APP_CLIENT_ID,
+        grantType: 'sms',
+        tenantId: '000000',
+        code: '',
+        uuid: '',
+        appid: process.env.TARO_APP_ID,
+        phonenumber: '18775167632',
+        smsCode: '6799',
+      },
+    })
+    console.log(res, 'resresres')
 
     setToken('dfasdfasdfasdfsda ')
-    navigate(lastTab === '/mine' ? '/factory' : lastTab)
+    navigate('/factory')
   }
 
   // 获取验证码
@@ -61,7 +72,7 @@ const Login = () => {
       Taro.showToast({ title: '请填写完整信息', icon: 'none' })
       return
     }
-    const result = await request<IDataResponse<ILoginInfo>, ISMSLoginOptions>('/api/phone-login', {
+    const result = await request<IDataResponse<ILoginInfo>, ISMSLoginOptions>('/auth/login', {
       method: 'POST',
       data: {
         clientId: process.env.TARO_APP_CLIENT_ID,
@@ -76,7 +87,7 @@ const Login = () => {
       },
     })
     setToken(result.data.access_token)
-    navigate(lastTab === '/mine' ? '/factory' : lastTab)
+    navigate('/factory')
   }
 
   const wechatLogin = async (phonenumber?: number) => {
@@ -117,7 +128,7 @@ const Login = () => {
           setUserInfo(userInfo)
         }
 
-        navigate(lastTab === '/mine' ? '/factory' : lastTab)
+        navigate('/factory')
       } else {
         Taro.showToast({
           title: res.msg,
@@ -130,15 +141,25 @@ const Login = () => {
     }
   }
   useEffect(() => {
-    Taro.getUserProfile({ desc: '用于完善会员资料' }).then((res) => {
-      console.log(res, 'res')
-      setUserInfo(res.userInfo)
-      setIsUserUpdated(true)
-    })
+    if (Taro.getEnv() === Taro.ENV_TYPE.WEAPP) {
+      Taro.getUserProfile({ desc: '用于完善会员资料' })
+        .then((res) => {
+          console.log(res, 'res')
+          setUserInfo(res.userInfo)
+          setIsUserUpdated(true)
+        })
+        .catch((err) => {
+          console.log(err, 'err')
+        })
+        .finally(() => {
+          setIsLoading(false)
+        })
+    }
   }, [])
 
   return (
     <View className="login flex flex-col justify-center items-center p-2">
+      {/* <Button onClick={login}> 测试登录</Button> */}
       <View className="phone-number-login login flex flex-col justify-center items-center flex-auto w-full">
         <View className="login-input phone-number">
           <Input placeholder="请输入手机号" value={phone} onInput={(e) => setPhone(e.detail.value)} />

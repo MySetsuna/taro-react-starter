@@ -1,5 +1,5 @@
 import Taro from '@tarojs/taro'
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 /**
  * 防抖 hook
@@ -37,4 +37,24 @@ export const useNavTitle = <P>(fc: React.FC<P>, title: string) => {
     })
     return fc(props)
   }
+}
+
+export function useInterval(callback, delay) {
+  const savedCallback = useRef<any>()
+
+  // Remember the latest function.
+  useEffect(() => {
+    savedCallback.current = callback
+  }, [callback])
+
+  // Set up the interval.
+  useEffect(() => {
+    function tick() {
+      savedCallback.current()
+    }
+    if (delay !== null) {
+      let id = setInterval(tick, delay)
+      return () => clearInterval(id)
+    }
+  }, [delay])
 }

@@ -34,6 +34,8 @@ const singletonEnforcer = Symbol('Utils')
 class Utils {
   private static _instance: Utils
   public imSdk: any
+  public TIM_TYPES: any
+  public TIM_EVENT: any
   constructor(enforcer: any) {
     if (enforcer !== singletonEnforcer) throw new Error('Cannot initialize single instance')
   }
@@ -44,9 +46,11 @@ class Utils {
     return this._instance
   }
 
-  setIMSDK = (sdk: any) => {
+  setIMSDK = (sdk: any, types: any, event: any) => {
     Taro.eventCenter.trigger('imSdkReady', true)
     this.imSdk = sdk
+    this.TIM_TYPES = types
+    this.TIM_EVENT = event
   }
 
   onIMSDKReady = (cb: () => void) => {

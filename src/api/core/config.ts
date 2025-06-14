@@ -1,14 +1,15 @@
 import type { AxiosError, AxiosResponse } from 'axios'
 import Taro from '@tarojs/taro'
 import { RequestConfig } from 'types/http'
+import { useImStoreReset, useUserReset, useUserStore } from '@/models'
+import { EResponseCode } from './http'
 
 // 错误处理方案：错误类型
 enum ErrorShowType {
-  SILENT = 0,
-  WARN_MESSAGE = 1,
-  ERROR_MESSAGE = 2,
-  NOTIFICATION = 3,
-  REDIRECT = 9,
+  SignInError = 401, // 登录失效
+  WarnMessage = 10001, // 警告提示
+  ErrorMessage = 10002, // 错误提示
+  Notification = 10003, // 通知提示
 }
 
 // 与后端约定的响应数据格式
@@ -22,29 +23,20 @@ interface ResponseStructure<T = any> {
 /**
  * 业务错误处理
  */
-function bizErrorHandler(error: any) {
-  if (error.info) {
-    const { errorMessage, errorCode, showType } = error.info
-    switch (showType) {
-      case ErrorShowType.SILENT:
-        // do nothing
-        break
-      case ErrorShowType.WARN_MESSAGE:
-        // TODO
-        break
-      case ErrorShowType.ERROR_MESSAGE:
-        // TODO
-        break
-      case ErrorShowType.NOTIFICATION:
-        // TODO
-        break
-      case ErrorShowType.REDIRECT:
-        // TODO
-        break
-      default:
-        // TODO
-        console.error(errorMessage)
-    }
+function bizErrorHandler(error: { msg: string; code: number }) {
+  const { code } = error
+  switch (code) {
+    case ErrorShowType.SignInError:
+      useUserReset()
+      useImStoreReset()
+      Taro.showToast({
+        title: '登录失效',
+        icon: 'error',
+      })
+      break
+    default:
+      // TODO
+      console.error(code, error.msg)
   }
 }
 /**
@@ -55,7 +47,12 @@ function responseStatusHandler(error: AxiosError) {
     const { status } = error.response as AxiosResponse
     switch (status) {
       case 401:
-        // TODO
+        useUserReset()
+        useImStoreReset()
+        Taro.showToast({
+          title: '登录失效',
+          icon: 'error',
+        })
         break
       case 403:
         // TODO
@@ -97,7 +94,7 @@ const requestConfig: RequestConfig<ResponseStructure> = {
       if (opts && opts.skipErrorHandler) return
       // 自定义错误的处理
       if (error.name === 'BizError') {
-        bizErrorHandler(error)
+        // bizErrorHandler(error)
       } else if (error.name === 'AxiosError') {
         // Axios 的错误
         // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
@@ -133,16 +130,10 @@ const requestConfig: RequestConfig<ResponseStructure> = {
     (response) => {
       // 拦截响应数据，进行个性化处理
       const { config, data } = response
-      // !data &&
-      //   requestConfig.errorConfig?.errorThrower?.({
-      //     success: false,
-      //     code: 'E0001',
-      //     message: '缺少响应数据',
-      //   })
-      // if (!data.success) {
-      //   // TODO
-      //   requestConfig.errorConfig?.errorThrower?.(data)
-      // }
+      // 业务错误
+      if (EResponseCode.SUCCESS !== data.code) {
+        bizErrorHandler(data)
+      }
       console.log(config, data, 'config, data')
 
       return response

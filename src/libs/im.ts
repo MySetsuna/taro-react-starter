@@ -2,9 +2,10 @@ import TIM from 'tim-wx-sdk'
 // import COS from 'cos-wx-sdk-v5'
 import TIMUploadPlugin from 'tim-upload-plugin'
 
-let tim: any = null
+export const TIM_TYPES =  TIM.TYPES
+export const TIM_EVENT =  TIM.EVENT
 
-export const iminit_TIM = async (
+export const iminit_TIM = (
   params: {
     appId: number
     userId: string
@@ -28,12 +29,9 @@ export const iminit_TIM = async (
   }
   // 创建 SDK 实例，`TIM.create()`方法对于同一个 `SDKAppID` 只会返回同一份实例
   // SDK 实例通常用 tim 表示
-  if (!tim) {
-    tim = TIM.create(options)
-  }
+  const tim = TIM.create(options)
   // 设置 SDK 日志输出级别，详细分级请参见 setLogLevel 接口的说明
   // tim.setLogLevel(0); // 普通级别，日志量较多，接入时建议使用
-  loginIm_TIM(tim, { userId, userSig }, callbacks)
   tim.setLogLevel(1) // release 级别，SDK 输出关键信息，生产环境时建议使用
 
   // 注册 COS SDK 插件
@@ -42,13 +40,17 @@ export const iminit_TIM = async (
   // 监听事件，例如：
   tim.on(TIM.EVENT.SDK_READY, (event) => {
     // timStore.isImLogin = true
+    console.log('SDK_READY')
+
     onImLogin(true)
     isImLogin = true
+
     // Taro.setStorageSync('isImLogin', true)
     // @ts-ignore
     // eslint-disable-next-line no-undef
     // wx.event.emit('SDK_ready', event.name)
     onSDKReady(event.name)
+    initRecentContactList(tim, callbacks)
     // 收到离线消息和会话列表同步完毕通知，接入侧可以调用 sendMessage 等需要鉴权的接口
     // event.name - TIM.EVENT.SDK_READY
   })
@@ -123,6 +125,7 @@ export const iminit_TIM = async (
     //    - TIM.TYPES.KICKED_OUT_MULT_DEVICE 多终端登录被踢
     //    - TIM.TYPES.KICKED_OUT_USERSIG_EXPIRED 签名过期被踢
   })
+  loginIm_TIM(tim, { userId, userSig }, callbacks)
   return tim
 }
 
@@ -201,10 +204,6 @@ const loginIm_TIM = (
     promise
       .then((imResponse) => {
         onImLogin(true)
-        setTimeout(() => {
-          // 拉取会话列表
-          initRecentContactList(tim, callbacks)
-        }, 600)
       })
       .catch((imError) => {
         // Taro.showToast({

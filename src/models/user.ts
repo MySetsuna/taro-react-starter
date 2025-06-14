@@ -11,7 +11,6 @@ import { IIMUserInfo } from 'types/im'
 interface State {
   token: string
   isLogged: boolean
-  lastTab: string
   userInfo: Taro.UserInfo | null
   loginInfo: ILoginInfo | null
   IMUserInfo: IIMUserInfo | null
@@ -19,7 +18,6 @@ interface State {
 interface Action {
   setToken: (token: string) => void
   removeToken: () => void
-  setLastTab: (tab: string) => void
   setUserInfo: (userInfo: Taro.UserInfo) => void
   setLoginInfo: (userInfo: ILoginInfo) => void
   setIMUserInfo: (userInfo: IIMUserInfo) => void
@@ -28,7 +26,6 @@ interface Action {
 const initialState: State = {
   token: '',
   isLogged: false,
-  lastTab: '',
   userInfo: null,
   loginInfo: null,
   IMUserInfo: null,
@@ -38,11 +35,9 @@ const store = create<State & Action>()(
     (set, get) => ({
       token: '',
       isLogged: false,
-      lastTab: '',
       userInfo: null,
       loginInfo: null,
       IMUserInfo: null,
-      setLastTab: (tab) => set({ lastTab: tab }),
       setToken: (token) => set({ token, isLogged: true }),
       removeToken: async () => {
         await request<IResponse>('/auth/logout', {

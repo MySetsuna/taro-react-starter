@@ -5,6 +5,8 @@ import createSelectors from './selectors'
 import { ICategory, IFactory, TAreaTree } from 'types/module'
 import { IDataResponse, IRowsResponse } from 'types/http'
 import { EResponseCode, request } from '@/api'
+import { CascaderOption } from '@nutui/nutui-react-taro'
+import { useMemo } from 'react'
 
 interface State {
   factoryList: ReadonlyArray<IFactory>
@@ -76,4 +78,33 @@ const store = create<State & Action>()(
 export const useFactoryStore = createSelectors(store)
 export function useFactoryReset() {
   store.setState(initialState)
+}
+export function useAreaOptions(areaData: ReadonlyArray<TAreaTree>) {
+  const options = useMemo(() => {
+    const options: Array<CascaderOption> = areaData.slice().map((item) => {
+      const children = item.children.map((child) => {
+        return {
+          value: child.value,
+          text: child.label,
+        }
+      })
+      if (children.length > 1) {
+        children.unshift({
+          value: -1,
+          text: '不限',
+        })
+      }
+      return {
+        value: item.value,
+        text: item.label,
+        children,
+      }
+    })
+    options.unshift({
+      value: -1,
+      text: '全国',
+    })
+    return options
+  }, [areaData])
+  return options
 }

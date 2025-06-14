@@ -1,6 +1,6 @@
 import type { UserConfigExport } from '@tarojs/cli'
 
-export default {
+const config: UserConfigExport = {
   mini: {},
   h5: {
     /**
@@ -30,4 +30,6 @@ export default {
     //     }))
     // }
   },
-} satisfies UserConfigExport
+}
+
+export default config

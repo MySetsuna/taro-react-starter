@@ -1,0 +1,73 @@
+/* 容器基础样式 */
+.container {
+  padding: 20rpx;
+}
+
+/* 文件信息容器 */
+.file-info-container {
+  margin: 20rpx 0;
+}
+
+/* 文件名和按钮组容器 */
+.file-and-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+/* 文件名样式 */
+.file-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 28rpx;
+  color: #333;
+  margin-right: 20rpx;
+}
+
+/* 按钮组容器 */
+.button-group {
+  display: flex;
+  gap: 20rpx;
+}
+
+/* 按钮基础样式 */
+.button-group button {
+  padding: 0 20rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  font-size: 24rpx;
+  border-radius: 6rpx;
+  flex: 1;
+  max-width: 140rpx;
+  white-space: nowrap;
+}
+
+/* 进度条容器 */
+.progress-container {
+  height: 6rpx;
+  background-color: #f0f0f0;
+  border-radius: 3rpx;
+  overflow: hidden;
+  margin: 20rpx 0;
+}
+
+/* 进度条填充 */
+.progress-bar {
+  height: 100%;
+  background-color: #4CAF50;
+  transition: width 0.3s ease;
+}
+
+.file-upload {
+  padding: 20px;
+
+  &__title {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+}
