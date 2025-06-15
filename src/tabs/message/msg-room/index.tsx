@@ -468,8 +468,10 @@ const MsgRoomFnc: React.FC = () => {
         >
           <Button
             onClick={() => {
-              // navigate(`/file-upload?backUrl=${encodeURIComponent(`chat${location.search}`)}`)
-              setOpenFileUpload(true)
+              Taro.navigateTo({
+                url: `/pages/file-upload/index?backUrl=${encodeURIComponent(`chat${location.search}`)}`,
+              })
+              // setOpenFileUpload(true)
             }}
           >
             大文件上传

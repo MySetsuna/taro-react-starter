@@ -7,15 +7,12 @@ export default {
   },
   mini: {},
   // plugins: ['@tarojs/plugin-mock'],
-  // h5: {
-  //   devServer: {
-  //     proxy: {
-  //       '/api': {
-  //         target: process.env.TARO_APP_API,
-  //         changeOrigin: true,
-  //         pathRewrite: { '^/api': '' },
-  //       },
-  //     },
-  //   },
-  // },
+  h5: {
+    devServer: {
+      allowedHosts: 'all',
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+    },
+  },
 } satisfies UserConfigExport

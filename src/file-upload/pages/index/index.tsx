@@ -135,6 +135,8 @@ export default function FileUpload() {
     goBack()
   }
 
+  console.log(window.parent, '9999999999999999999')
+
   useEffect(() => {
     console.log(clientConfig, 'clientConfig', fileName, 'fileName')
 
@@ -147,25 +149,11 @@ export default function FileUpload() {
 
   return (
     <View className="container">
-      <View className="h-[58Px] z-50 sticky top-0 flex shrink-0 items-center justify-center border-0 !border-b border-solid border-[#b9b8b8] bg-gray-50">
-        <NavBar
-          back={<ArrowLeft size={30} className="text-gray-400 active:text-red-400" />}
-          onBackClick={goBack}
-          // right={
-          //   <Button type="primary" size="mini" onClick={() => navigate(`shop/${sendId}`)}>
-          //     店铺
-          //   </Button>
-          // }
-          title={'文件上传'}
-        ></NavBar>
-      </View>
-      {/* 文件选择器 */}
       {showSelect && (
         <View className="selector-container">
           <Button onClick={selectFile}>选择文件</Button>
         </View>
       )}
-
       {/* 文件信息与按钮区域 */}
       {showUpload && (
         <View className="file-info-container">
@@ -180,7 +168,6 @@ export default function FileUpload() {
           </View>
         </View>
       )}
-
       {/* 进度条 */}
       {showUpload && (
         <View className="progress-container">

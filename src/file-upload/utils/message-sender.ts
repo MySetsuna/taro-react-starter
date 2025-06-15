@@ -24,14 +24,18 @@ const sendMiniProgramMessage = (data: any) => {
 
 export const sendNavigateBack = (backUrl: string) => {
   import('weixin-js-sdk').then(({ default: wx }) => {
-    wx.miniProgram.navigateTo({
-      url: `pages/index/index`,
-    } as any)
+    try {
+      console.log('closeWindow',WeixinJSBridge)
+
+      wx.miniProgram.navigateBack(undefined)
+    } catch (error) {
+      console.log(error, 'error')
+    }
   })
 }
 
 export const isWx = () => {
-  const ua = navigator.userAgent.toLowerCase()
+  const ua = navigator.userAgent.toLowerCase() /*  */
   console.log(ua, 'ua')
 
   if (ua.startsWith('micromessenger') || ua.includes('miniprogramhtmlwebview') || ua.includes('miniprogram')) {
