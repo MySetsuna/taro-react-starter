@@ -3,7 +3,7 @@ import { useGlobalIconFont } from './icons/helper'
 export default defineAppConfig({
   lazyCodeLoading: 'requiredComponents',
   usingComponents: Object.assign(useGlobalIconFont()),
-  pages: ['pages/index/index', 'pages/file-upload/index'],
+  pages: ['pages/index/index', 'pages/file-upload/index', 'pages/chat/index'],
   animation: true,
   entryPagePath: 'pages/index/index',
   window: {

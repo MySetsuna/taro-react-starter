@@ -8,7 +8,8 @@ interface State {
   isSDKReady: boolean
   messageMap: Record<string, any[] | undefined>
   im: any
-  conversationList: any[]
+  conversationList: any[],
+  pinnedList: any[]
 }
 interface Action {
   setIsSDKReady: (value: boolean) => void
@@ -16,6 +17,7 @@ interface Action {
   setConversationList: (list: any) => void
   setMessageMapById: (id: string, list: any[]) => void
   getMessageMapById: (id: string) => any[]
+  setPinnedList: (list: any) => void
 }
 
 const store = create<State & Action>()(
@@ -24,12 +26,20 @@ const store = create<State & Action>()(
       im: null,
       messageMap: {},
       conversationList: [],
+      pinnedList: [],
       isSDKReady: false,
       setIsSDKReady: (value) => set({ isSDKReady: value }),
       setIminstance: (im) => set({ im }),
       setConversationList: (list) => set({ conversationList: list }),
       setMessageMapById: (id, list) => set({ messageMap: { ...get().messageMap, [id]: list } }),
       getMessageMapById: (id) => get().messageMap[id] || [],
+      setPinnedList: (list) => {
+        if (typeof list === 'function') {
+          set({ pinnedList: list(get().pinnedList) })
+        } else {
+          set({ pinnedList: list })
+        }
+      },
     }),
     {
       name: StorageSceneKey.IM,

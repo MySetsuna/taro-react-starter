@@ -1,7 +1,7 @@
 import { TABBAR_HEIGHT } from '@/config'
 import { utils } from '@/libs'
 import { useImStore, useMessageMapById, useUserStore } from '@/models'
-import { Add, ArrowLeft, Dongdong, Plus, Top, VolumeMax } from '@nutui/icons-react-taro'
+import { Add, ArrowLeft, Dongdong, Phone, Plus, Top, VolumeMax } from '@nutui/icons-react-taro'
 import {
   Avatar,
   Badge,
@@ -19,35 +19,24 @@ import {
 import { View, Text, ScrollView, WebView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useRef, useEffect, CSSProperties, useLayoutEffect } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router'
-import { emojis } from '../emoji/data'
+import { emojis } from '../../tabs/message/emoji/data'
 import './index.scss'
 import { useNavTitle } from '@/hooks'
 import { request } from '@/api'
 import { IDataResponse, IRequestOptionsWithType } from 'types/http'
 
-interface Message {
-  id: number
-  content: string
-  isSelf: boolean
-  timestamp: string
-}
-
-const MsgRoomFnc: React.FC = () => {
-  const { search } = useLocation()
-  const query = new URLSearchParams(search)
-  const sendId = query.get('sendId')
-  const companyName = query.get('companyName')
-  const type = query.get('type')
-  const avatar = query.get('avatar')
-  const cID = query.get('conversationID')
+const Chat: React.FC = () => {
+  const params = Taro.getCurrentInstance().router?.params
+  const sendId = params?.sendId
+  const companyName = params?.companyName
+  const type = params?.type
+  const avatar = params?.avatar
+  const cID = params?.conversationID
 
   const tim = useImStore.use.im()
   const timUser = useUserStore.use.IMUserInfo()
   const [conversationID, setConversationID] = useState(cID)
   const [messageToImId, setMessageToImId] = useState(sendId)
-
-  const navigate = useNavigate()
 
   const fullHeight = Taro.getWindowInfo().windowHeight
 
@@ -56,7 +45,6 @@ const MsgRoomFnc: React.FC = () => {
   const [isOnInput, setIsOnInput] = useState(false)
 
   const [scrollTop, setScrollTop] = useState(99999)
-  const [scrollHeight, setScrollHeight] = useState(0)
   console.log(scrollTop, 'scrollTopscrollTopscrollTop')
 
   // 发送信息
@@ -285,28 +273,31 @@ const MsgRoomFnc: React.FC = () => {
     }
   }, [sendId, conversationID])
 
-  useEffect(() => {
-    if (nextReqMessageID) {
-      setTimeout(() => {
-        console.log(scrollHeight, 'scrollHeight000000000', scrollTop)
-      }, 10)
-    }
-  }, [nextReqMessageID, scrollHeight])
-
   console.log(scrollIntoView, 'scrollIntoViewscrollIntoViewscrollIntoView')
 
   return (
     <View className="msg-room  flex flex-col h-[100vh]">
       <View className="h-[58Px] z-50 sticky top-0 flex shrink-0 items-center justify-center border-0 !border-b border-solid border-[#b9b8b8] bg-gray-50">
         <NavBar
-          back={<ArrowLeft size={30} className="text-gray-400 active:text-red-400" />}
           onBackClick={() => {
-            navigate(-1)
+            Taro.navigateTo({ url: `/pages/shop/index?sendId=${sendId}` })
           }}
-          right={
-            <Button type="primary" size="mini" onClick={() => navigate(`shop/${sendId}`)}>
+          back={
+            <Button type="primary" size="mini">
               店铺
             </Button>
+          }
+          right={
+            <View>
+              <Phone
+                className="text-red-500 active:text-red-400"
+                onClick={() => {
+                  // Taro.makePhoneCall({
+                  //   phoneNumber: sendId,
+                  // })
+                }}
+              />
+            </View>
           }
           title={companyName}
         >
@@ -382,7 +373,6 @@ const MsgRoomFnc: React.FC = () => {
                 </View>
               </View>
             ))}
-          {isLoaded && !myMessages.length && <Empty />}
         </View>
       </ScrollView>
 
@@ -393,7 +383,7 @@ const MsgRoomFnc: React.FC = () => {
         style={{
           top: `${fullHeight - 94}Px`,
         }}
-        className="footer flex absolute flex-col shrink-0 w-full bg-red-50  p-3 pt-1 pb-8 box-border text-red-500"
+        className="footer flex absolute flex-col shrink-0 w-full bg-gray-100  p-3 pt-1 pb-8 box-border text-red-500"
       >
         <View className="flex items-center gap-3">
           <VolumeMax size={24} />
@@ -431,10 +421,13 @@ const MsgRoomFnc: React.FC = () => {
                 lineHeight: '24Px',
               }}
             />
-            {isOnInput ? (
-              <>键盘</>
-            ) : (
-              <View className=" absolute w-0 right-0">
+
+            <View className=" absolute w-0 right-0">
+              {isOnInput ? (
+                <Button type="primary" size="mini" className="relative left-[-32Px]">
+                  键盘
+                </Button>
+              ) : (
                 <Dongdong
                   className=" relative left-[-32Px]"
                   size={24}
@@ -447,20 +440,22 @@ const MsgRoomFnc: React.FC = () => {
                     })
                   }}
                 />
-              </View>
-            )}
+              )}
+            </View>
           </View>
-          <Add
-            size={24}
-            onClick={() => {
-              setShowMore(true)
-              setShowEmoji(false)
-              Taro.pageScrollTo({
-                scrollTop: 250,
-                duration: 200,
-              })
-            }}
-          />
+          <View className="flex items-center justify-center rounded-full border-solid border-red-500 box-border border">
+            <Add
+              size={20}
+              onClick={() => {
+                setShowMore(true)
+                setShowEmoji(false)
+                Taro.pageScrollTo({
+                  scrollTop: 250,
+                  duration: 200,
+                })
+              }}
+            />
+          </View>
           <Top onClick={() => handleSend()} />
         </View>
         <View
@@ -520,4 +515,4 @@ const MsgRoomFnc: React.FC = () => {
   )
 }
 //border-0 !border-b border-solid border-[#e2e2e2]
-export const MsgRoom = useNavTitle(MsgRoomFnc, '消息')
+export default useNavTitle(Chat, '消息')

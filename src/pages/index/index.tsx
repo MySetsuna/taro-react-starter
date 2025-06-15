@@ -19,7 +19,7 @@ import { getMessageList, useImStore, useImStoreReset } from '@/models/im'
 import { utils } from '@/libs'
 import { IDataResponse, IGetOptionsWithoutParams } from 'types/http'
 import { IIMUserInfo } from 'types/im'
-import { MsgRoom } from '@/tabs/message/msg-room'
+import { Chat } from '@/pages/chat'
 import FileUpload from '@/tabs/pages/file-upload'
 
 export default function Index() {
@@ -90,6 +90,8 @@ export default function Index() {
             console.log(num, 'num')
           },
           onConversationList: (list: any) => {
+            console.log(list, 'setConversationList')
+
             setConversationList(list)
           },
         }
@@ -149,12 +151,10 @@ export default function Index() {
             <Route path="factory" element={<Factory />}></Route>
             <Route path="shop/:shopId" element={<View>店铺</View>}></Route>
             <Route path="message" element={<Message />}></Route>
-            <Route path="chat" element={<MsgRoom />}></Route>
             <Route path="moments" element={<Moments />}></Route>
             <Route path="magazine" element={<Magazine />}></Route>
             <Route path="mine" element={<Mine />}></Route>
             <Route path="login" element={<Login />}></Route>
-            <Route path="file-upload" element={<FileUpload />}></Route>
             <Route index element={<Navigate to={lastTab || '/factory'} />}></Route>
             <Route path="*" element={<NotFound />}></Route>
           </Route>

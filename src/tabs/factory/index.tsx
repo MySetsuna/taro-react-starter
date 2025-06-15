@@ -1,27 +1,16 @@
-import { ScrollView, View } from '@tarojs/components'
-import {
-  Address,
-  Button,
-  Cascader,
-  CascaderOption,
-  Image,
-  InfiniteLoading,
-  Loading,
-  SearchBar,
-  Toast,
-  VirtualList,
-} from '@nutui/nutui-react-taro'
-import { Location, Message, Star } from '@nutui/icons-react-taro'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { View } from '@tarojs/components'
+import { Button, Cascader, Image, InfiniteLoading, SearchBar } from '@nutui/nutui-react-taro'
+import { Location, Message } from '@nutui/icons-react-taro'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { IFactory } from 'types/module'
+import type { IRowsResponse } from 'types/http'
+import Taro from '@tarojs/taro'
+import { useNavigate } from 'react-router'
 import { useDebounce } from '@/hooks/common'
 import { EResponseCode, request } from '@/api'
-import { ICategory, IFactory } from 'types/module'
-import { IRowsResponse } from 'types/http'
 import { useAreaOptions, useFactoryStore } from '@/models/factory'
-import Taro, { useDidShow, useLaunch } from '@tarojs/taro'
 import './index.scss'
 import { BackTop } from '@/components/back-top'
-import { useNavigate } from 'react-router'
 
 function Factory() {
   // value
@@ -62,7 +51,8 @@ function Factory() {
               displayLocatiopn = child.text
             }
           })
-        } else {
+        }
+        else {
           displayLocatiopn = item.text
         }
       }
@@ -98,12 +88,10 @@ function Factory() {
       params: {
         province: locationValue[0] > 0 ? locationValue[0] : undefined,
         city: locationValue[1] > 0 ? locationValue[1] : undefined,
-        name: searchValue || undefined,
-        // tenantType: '[01]',
+        name: searchValue ?? undefined,
         tenantCategoryId: currentCategory,
       },
     })
-    console.log(data, 'data')
 
     if (data.code === EResponseCode.SUCCESS) {
       setFactoryList(data.rows)
@@ -142,14 +130,14 @@ function Factory() {
               placeholder="搜索"
               onSearch={setSearchValue}
               shape="round"
-              style={{ ['--nutui-searchbar-input-height']: '38PX' } as any}
+              style={{ '--nutui-searchbar-input-height': '38PX' } as any}
             />
           </View>
         </View>
 
         <View
           className="factory-wrapper grid grid-cols-[21%_1fr] fixed top-[58Px] w-full h-[100vh]"
-          style={!!wrapperHeight ? { height: `${wrapperHeight}Px` } : undefined}
+          style={wrapperHeight ? { height: `${wrapperHeight}Px` } : undefined}
         >
           <InfiniteLoading
             enhanced
@@ -205,8 +193,9 @@ function Factory() {
                         size="mini"
                         style={{ width: '50%' }}
                         onClick={() => {
-                          const path = `/chat?sendId=${item.id}&companyName=${item.companyName}&type=GROUP&avatar=${item.backgroundImageUrl}`
-                          navigate(path)
+                          const path = `/pages/chat/index?sendId=${item.id}&companyName=${item.companyName}&type=C2C&avatar=${item.backgroundImageUrl}`
+                          Taro.navigateTo({ url: path })
+                          Taro.setNavigationBarTitle({ title:'消息' })
                         }}
                       >
                         <View className="flex items-center leading-4 gap-1 ">
