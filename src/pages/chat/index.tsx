@@ -1,7 +1,7 @@
 import { TABBAR_HEIGHT } from '@/config'
 import { utils } from '@/libs'
 import { useImStore, useMessageMapById, useUserStore } from '@/models'
-import { Add, ArrowLeft, Dongdong, Phone, Plus, Top, VolumeMax } from '@nutui/icons-react-taro'
+import { Add, ArrowLeft, Dongdong, Phone, Plus, Top, VolumeMax, Image as ImageIcon, Video, File } from '@nutui/icons-react-taro'
 import {
   Avatar,
   Badge,
@@ -43,6 +43,9 @@ const Chat: React.FC = () => {
   const [showMore, setShowMore] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
   const [isOnInput, setIsOnInput] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const recordingTimer = useRef<NodeJS.Timeout>()
 
   const [scrollTop, setScrollTop] = useState(99999)
   console.log(scrollTop, 'scrollTopscrollTopscrollTop')
@@ -63,7 +66,6 @@ const Chat: React.FC = () => {
 
   // 语音操作
   const [title, settitle] = useState('正在录音')
-  const [isRecording, setisRecording] = useState(false)
 
   const [isLoaded, setIsLoaded] = useState(false)
   const [scrollIntoView, setScrollIntoView] = useState('')
@@ -78,6 +80,195 @@ const Chat: React.FC = () => {
 
   const scrollToBottom = (num?: number) => {
     setScrollTop((prev) => prev + (num || 1))
+  }
+
+  // 开始录音
+  const startRecording = async () => {
+    try {
+      setIsRecording(true)
+      setRecordingTime(0)
+      recordingTimer.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1)
+      }, 1000)
+
+      const res = await Taro.startRecord()
+      const { tempFilePath } = res
+
+      // 上传录音文件
+      const uploadRes = await Taro.uploadFile({
+        url: `${baseUrl}/upload`,
+        filePath: tempFilePath,
+        name: 'file',
+        header: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      const { url } = JSON.parse(uploadRes.data)
+
+      // 发送语音消息
+      const message = tim.createCustomMessage({
+        to: messageToImId,
+        conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
+        payload: {
+          data: JSON.stringify({
+            type: 'voice',
+            url,
+            duration: recordingTime
+          })
+        }
+      })
+
+      sendMessageFun(message, 'voice')
+    } catch (error) {
+      console.error('录音失败:', error)
+      Taro.showToast({
+        title: '录音失败',
+        icon: 'none'
+      })
+    } finally {
+      stopRecording()
+    }
+  }
+
+  // 停止录音
+  const stopRecording = () => {
+    if (recordingTimer.current) {
+      clearInterval(recordingTimer.current)
+    }
+    setIsRecording(false)
+    setRecordingTime(0)
+    Taro.stopRecord()
+  }
+
+  // 选择图片
+  const chooseImage = async () => {
+    try {
+      const res = await Taro.chooseImage({
+        count: 9,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera']
+      })
+
+      for (const tempFile of res.tempFilePaths) {
+        const uploadRes = await Taro.uploadFile({
+          url: `${baseUrl}/upload`,
+          filePath: tempFile,
+          name: 'file',
+          header: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+
+        const { url } = JSON.parse(uploadRes.data)
+
+        // 发送图片消息
+        const message = tim.createImageMessage({
+          to: messageToImId,
+          conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
+          payload: {
+            file: {
+              url
+            }
+          }
+        })
+
+        sendMessageFun(message, 'image')
+      }
+    } catch (error) {
+      console.error('选择图片失败:', error)
+      Taro.showToast({
+        title: '选择图片失败',
+        icon: 'none'
+      })
+    }
+  }
+
+  // 选择视频
+  const chooseVideo = async () => {
+    try {
+      const res = await Taro.chooseVideo({
+        sourceType: ['album', 'camera'],
+        compressed: true,
+        maxDuration: 60
+      })
+
+      const uploadRes = await Taro.uploadFile({
+        url: `${baseUrl}/upload`,
+        filePath: res.tempFilePath,
+        name: 'file',
+        header: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      const { url } = JSON.parse(uploadRes.data)
+
+      // 发送视频消息
+      const message = tim.createVideoMessage({
+        to: messageToImId,
+        conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
+        payload: {
+          file: {
+            url
+          },
+          duration: res.duration,
+          size: res.size
+        }
+      })
+
+      sendMessageFun(message, 'video')
+    } catch (error) {
+      console.error('选择视频失败:', error)
+      Taro.showToast({
+        title: '选择视频失败',
+        icon: 'none'
+      })
+    }
+  }
+
+  // 选择文件
+  const chooseFile = async () => {
+    try {
+      const res = await Taro.chooseMessageFile({
+        count: 1,
+        type: 'file'
+      })
+
+      const file = res.tempFiles[0]
+      const uploadRes = await Taro.uploadFile({
+        url: `${baseUrl}/upload`,
+        filePath: file.path,
+        name: 'file',
+        header: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      const { url } = JSON.parse(uploadRes.data)
+
+      // 发送文件消息
+      const message = tim.createCustomMessage({
+        to: messageToImId,
+        conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
+        payload: {
+          data: JSON.stringify({
+            type: 'file',
+            url,
+            name: file.name,
+            size: file.size
+          })
+        }
+      })
+
+      sendMessageFun(message, 'file')
+    } catch (error) {
+      console.error('选择文件失败:', error)
+      Taro.showToast({
+        title: '选择文件失败',
+        icon: 'none'
+      })
+    }
   }
 
   const sendMessageFun = (message, type) => {
@@ -188,8 +379,35 @@ const Chat: React.FC = () => {
   }
 
   const msgDisplay = (item) => {
-    if (item.type === 'TIMTextElem') {
-      return item.payload.text
+    switch (item.type) {
+      case 'TIMTextElem':
+        return <Text className="select-text">{item.payload.text}</Text>
+      case 'TIMImageElem':
+        return <Image src={item.payload.imageInfoArray[0].url} mode="aspectFit" className="max-w-[200px] max-h-[200px]" />
+      case 'TIMVideoElem':
+        return <Video src={item.payload.videoUrl} className="max-w-[200px] max-h-[200px]" />
+      case 'TIMCustomElem':
+        const data = item.payload.data
+        switch (data.type) {
+          case 'voice':
+            return (
+              <View className="flex items-center">
+                <VolumeMax size={20} />
+                <Text>{data.duration}s</Text>
+              </View>
+            )
+          case 'file':
+            return (
+              <View className="flex items-center">
+                <Top size={20} />
+                <Text>{data.name}</Text>
+              </View>
+            )
+          default:
+            return null
+        }
+      default:
+        return null
     }
   }
 
@@ -292,9 +510,9 @@ const Chat: React.FC = () => {
               <Phone
                 className="text-red-500 active:text-red-400"
                 onClick={() => {
-                  // Taro.makePhoneCall({
-                  //   phoneNumber: sendId,
-                  // })
+                  Taro.makePhoneCall({
+                    phoneNumber: sendId,
+                  })
                 }}
               />
             </View>
@@ -364,7 +582,7 @@ const Chat: React.FC = () => {
                       className={`chat-text-bg box-border rounded leading-[24Px] min-h-[40Px] min-w-[40Px] p-2 ${timUser.userId === item.from ? 'bg-red-100' : 'bg-white'}`}
                     >
                       {/* <Image src="" className="tel-img"></Image> */}
-                      <Text className=" select-text">{msgDisplay(item)}</Text>
+                      {msgDisplay(item)}
                     </View>
                   </View>
                 </View>
@@ -376,17 +594,20 @@ const Chat: React.FC = () => {
         </View>
       </ScrollView>
 
-      {/* <Overlay visible={!isLoaded}>
-        <Loading />
-      </Overlay> */}
       <View
+        className="footer flex absolute flex-col shrink-0 w-full bg-red-50 p-3 pt-1 pb-8 box-border text-red-500"
         style={{
           top: `${fullHeight - 94}Px`,
         }}
-        className="footer flex absolute flex-col shrink-0 w-full bg-gray-100  p-3 pt-1 pb-8 box-border text-red-500"
       >
         <View className="flex items-center gap-3">
-          <VolumeMax size={24} />
+          <View
+            className={isRecording ? 'animate-pulse' : ''}
+            onTouchStart={startRecording}
+            onTouchEnd={stopRecording}
+          >
+            <VolumeMax size={24} />
+          </View>
           <View
             className="chat-input flex-auto flex items-center relative shrink-0 min-h-[40PX]"
             style={
@@ -501,6 +722,20 @@ const Chat: React.FC = () => {
             itemEqual={true}
           />
         </View>
+        <View className="flex items-center justify-around mt-2">
+          <View className="flex flex-col items-center" onClick={chooseImage}>
+            <ImageIcon size={24} />
+            <Text className="text-xs mt-1">图片</Text>
+          </View>
+          <View className="flex flex-col items-center" onClick={chooseVideo}>
+            <Video size={24} />
+            <Text className="text-xs mt-1">视频</Text>
+          </View>
+          <View className="flex flex-col items-center" onClick={chooseFile}>
+            <Top size={24} />
+            <Text className="text-xs mt-1">文件</Text>
+          </View>
+        </View>
       </View>
       {openFileUpload && (
         <WebView
@@ -511,6 +746,9 @@ const Chat: React.FC = () => {
           }}
         />
       )}
+      <Overlay visible={!isLoaded}>
+        <Loading />
+      </Overlay>
     </View>
   )
 }
