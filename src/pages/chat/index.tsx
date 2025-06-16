@@ -145,14 +145,13 @@ const Chat: React.FC = () => {
         }
         playSound('end')
         vibrate('short')
-        const { tempFilePath } = res
-        handleVoiceUpload(tempFilePath)
+        createMediaMessage(res, 'voice')
       })
 
       recorderManager.current.onError((error) => {
         console.error('录音失败:', error)
         Taro.showToast({
-          title: '录音失败',
+          title: '取消',
           icon: 'none',
         })
         stopRecording()
@@ -220,16 +219,6 @@ const Chat: React.FC = () => {
     }
   }
 
-  // 处理语音上传
-  const handleVoiceUpload = (tempFilePath: string) => {
-    createMediaMessage(
-      {
-        path: tempFilePath,
-        duration: recordingTime,
-      },
-      'voice'
-    )
-  }
 
   // 停止录音
   const stopRecording = () => {
