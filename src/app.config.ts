@@ -1,15 +1,12 @@
-import { useGlobalIconFont } from './icons/helper'
-
 export default defineAppConfig({
   lazyCodeLoading: 'requiredComponents',
-  usingComponents: Object.assign(useGlobalIconFont()),
   pages: ['pages/index/index', 'pages/file-upload/index', 'pages/chat/index'],
   animation: true,
   entryPagePath: 'pages/index/index',
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#fff',
-    navigationBarTitleText: '广告制作',
+    navigationBarTitleText: '罗马广告',
     navigationBarTextStyle: 'black',
   },
   subPackages: [
@@ -18,12 +15,12 @@ export default defineAppConfig({
       pages: ['pages/blank/index'],
     },
   ],
-  preloadRule: {
-    'pages/index/index': {
-      network: 'all',
-      packages: ['im-sdk'],
-    },
-  },
+  // preloadRule: {
+  //   'pages/index/index': {
+  //     network: 'all',
+  //     packages: ['im-sdk'],
+  //   },
+  // },
   // tabBar: {
   //   custom: true,
   //   list: [

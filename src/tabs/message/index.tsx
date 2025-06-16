@@ -24,7 +24,8 @@ function Message() {
   const isSDKReady = useImStore.use.isSDKReady()
   const pinnedList = useImStore.use.pinnedList()
   const setPinnedList = useImStore.use.setPinnedList()
-
+  const isImLogin = useImStore.use.isImLogin()
+  const isImConnectReady = useImStore.use.isImConnectReady()
   const areaData = useFactoryStore.use.areaData()
   const [locationValue, setLocationValue] = useState([-1])
 
@@ -113,7 +114,7 @@ function Message() {
         console.warn('getConversationList error:', imError) // 获取会话列表失败的相关信息
       })
     // setIMUserInfo(res.data)
-  }, [])
+  }, [tim, isSDKReady, isImLogin, isImConnectReady])
 
   const avaDisplay = (nick) => {
     if (nick) {
@@ -152,15 +153,21 @@ function Message() {
     })
   }
 
+  const closeAllSwipe = () => {
+    Object.values(swipeMapRef.current).forEach((item: any) => {
+      item?.close()
+    })
+  }
+
   useEffect(() => {
     fetchAreaData()
   }, [])
 
   useEffect(() => {
-    if (tim && isSDKReady) {
+    if (tim && isSDKReady && isImLogin && isImConnectReady) {
       fetchConversationList()
     }
-  }, [tim, isSDKReady])
+  }, [tim, isSDKReady, isImLogin, isImConnectReady])
 
   useInterval(() => {
     setNow(new Date().getTime())
@@ -215,10 +222,11 @@ function Message() {
             position: 'fixed',
             top: '58PX',
           }}
-          onClick={() => {
-            Object.values(swipeMapRef.current).forEach((item: any) => {
-              item?.close()
-            })
+          onTouchStart={() => {
+            closeAllSwipe()
+          }}
+          onScroll={() => {
+            closeAllSwipe()
           }}
           scrollY
         >
@@ -241,10 +249,7 @@ function Message() {
                   contentEditable
                   className="active:bg-gray-100"
                   key={item.conversationID}
-                  onActionClick={() => {
-                    swipeMapRef.current[item.conversationID]?.close()
-                    setTimeout(() => {}, 100)
-                  }}
+                  onActionClick={closeAllSwipe}
                   rightAction={
                     <View className="flex items-center">
                       {!pinnedList.includes(item.conversationID) ? (

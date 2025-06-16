@@ -42,14 +42,11 @@ export const iminit_TIM = (
     // timStore.isImLogin = true
     console.log('SDK_READY')
 
-    onImLogin(true)
-    isImLogin = true
-
+    onSDKReady(event.name)
     // Taro.setStorageSync('isImLogin', true)
     // @ts-ignore
     // eslint-disable-next-line no-undef
     // wx.event.emit('SDK_ready', event.name)
-    onSDKReady(event.name)
     initRecentContactList(tim, callbacks)
     // 收到离线消息和会话列表同步完毕通知，接入侧可以调用 sendMessage 等需要鉴权的接口
     // event.name - TIM.EVENT.SDK_READY
@@ -206,6 +203,7 @@ const loginIm_TIM = (
         onImLogin(true)
       })
       .catch((imError) => {
+        onImLogin(false)
         // Taro.showToast({
         //   title: 'login error' + imError,
         //   icon: 'none',

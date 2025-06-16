@@ -1,7 +1,17 @@
 import { TABBAR_HEIGHT } from '@/config'
 import { utils } from '@/libs'
 import { useImStore, useMessageMapById, useUserStore } from '@/models'
-import { Add, ArrowLeft, Dongdong, Phone, Plus, Top, VolumeMax, Image as ImageIcon, Video, File } from '@nutui/icons-react-taro'
+import {
+  Add,
+  ArrowLeft,
+  Dongdong,
+  Phone,
+  Plus,
+  Top,
+  VolumeMax,
+  Image as ImageIcon,
+  Video,
+} from '@nutui/icons-react-taro'
 import {
   Avatar,
   Badge,
@@ -24,6 +34,32 @@ import './index.scss'
 import { useNavTitle } from '@/hooks'
 import { request } from '@/api'
 import { IDataResponse, IRequestOptionsWithType } from 'types/http'
+import UpperLoadScrollView from '@/components/UpperLoadScrollView'
+import MessageItem from '@/components/MessageItem'
+
+interface Message {
+  ID: string
+  from: string
+  payload: {
+    text?: string
+    data?: string
+  }
+  type: string
+  flow: 'in' | 'out'
+}
+
+// 消息骨架屏组件
+const MessageSkeleton: React.FC = () => {
+  return (
+    <View className="message-skeleton">
+      <View className="avatar-skeleton" />
+      <View className="content-skeleton">
+        <View className="text-skeleton" />
+        <View className="text-skeleton short" />
+      </View>
+    </View>
+  )
+}
 
 const Chat: React.FC = () => {
   const params = Taro.getCurrentInstance().router?.params
@@ -46,6 +82,7 @@ const Chat: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const recordingTimer = useRef<NodeJS.Timeout>()
+  const recorderManager = useRef(Taro.getRecorderManager())
 
   const [scrollTop, setScrollTop] = useState(99999)
   console.log(scrollTop, 'scrollTopscrollTopscrollTop')
@@ -82,51 +119,81 @@ const Chat: React.FC = () => {
     setScrollTop((prev) => prev + (num || 1))
   }
 
+  const textAreaRef = useRef<any>(null)
+
   // 开始录音
   const startRecording = async () => {
     try {
       setIsRecording(true)
       setRecordingTime(0)
       recordingTimer.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1)
+        setRecordingTime((prev) => prev + 1)
       }, 1000)
 
-      const res = await Taro.startRecord()
-      const { tempFilePath } = res
-
-      // 上传录音文件
-      const uploadRes = await Taro.uploadFile({
-        url: `${baseUrl}/upload`,
-        filePath: tempFilePath,
-        name: 'file',
-        header: {
-          Authorization: `Bearer ${token}`
-        }
+      recorderManager.current.onStart(() => {
+        console.log('录音开始')
       })
 
-      const { url } = JSON.parse(uploadRes.data)
+      recorderManager.current.onStop((res) => {
+        const { tempFilePath } = res
+        // 上传录音文件
+        Taro.uploadFile({
+          url: `${baseUrl}/upload`,
+          filePath: tempFilePath,
+          name: 'file',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+          success: (uploadRes) => {
+            const { url } = JSON.parse(uploadRes.data)
 
-      // 发送语音消息
-      const message = tim.createCustomMessage({
-        to: messageToImId,
-        conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
-        payload: {
-          data: JSON.stringify({
-            type: 'voice',
-            url,
-            duration: recordingTime
-          })
-        }
+            // 发送语音消息
+            const message = tim.createCustomMessage({
+              to: messageToImId,
+              conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
+              payload: {
+                data: JSON.stringify({
+                  type: 'voice',
+                  url,
+                  duration: recordingTime,
+                }),
+              },
+            })
+
+            sendMessageFun(message, 'voice')
+          },
+          fail: (error) => {
+            console.error('上传录音失败:', error)
+            Taro.showToast({
+              title: '上传录音失败',
+              icon: 'none',
+            })
+          },
+        })
       })
 
-      sendMessageFun(message, 'voice')
+      recorderManager.current.onError((error) => {
+        console.error('录音失败:', error)
+        Taro.showToast({
+          title: '录音失败',
+          icon: 'none',
+        })
+        stopRecording()
+      })
+
+      recorderManager.current.start({
+        duration: 60000, // 最长录音时间，单位ms
+        sampleRate: 44100,
+        numberOfChannels: 1,
+        encodeBitRate: 192000,
+        format: 'mp3',
+      })
     } catch (error) {
       console.error('录音失败:', error)
       Taro.showToast({
         title: '录音失败',
-        icon: 'none'
+        icon: 'none',
       })
-    } finally {
       stopRecording()
     }
   }
@@ -138,7 +205,7 @@ const Chat: React.FC = () => {
     }
     setIsRecording(false)
     setRecordingTime(0)
-    Taro.stopRecord()
+    recorderManager.current.stop()
   }
 
   // 选择图片
@@ -147,7 +214,7 @@ const Chat: React.FC = () => {
       const res = await Taro.chooseImage({
         count: 9,
         sizeType: ['compressed'],
-        sourceType: ['album', 'camera']
+        sourceType: ['album', 'camera'],
       })
 
       for (const tempFile of res.tempFilePaths) {
@@ -156,8 +223,8 @@ const Chat: React.FC = () => {
           filePath: tempFile,
           name: 'file',
           header: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         })
 
         const { url } = JSON.parse(uploadRes.data)
@@ -168,9 +235,9 @@ const Chat: React.FC = () => {
           conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
           payload: {
             file: {
-              url
-            }
-          }
+              url,
+            },
+          },
         })
 
         sendMessageFun(message, 'image')
@@ -179,7 +246,7 @@ const Chat: React.FC = () => {
       console.error('选择图片失败:', error)
       Taro.showToast({
         title: '选择图片失败',
-        icon: 'none'
+        icon: 'none',
       })
     }
   }
@@ -190,7 +257,7 @@ const Chat: React.FC = () => {
       const res = await Taro.chooseVideo({
         sourceType: ['album', 'camera'],
         compressed: true,
-        maxDuration: 60
+        maxDuration: 60,
       })
 
       const uploadRes = await Taro.uploadFile({
@@ -198,8 +265,8 @@ const Chat: React.FC = () => {
         filePath: res.tempFilePath,
         name: 'file',
         header: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       })
 
       const { url } = JSON.parse(uploadRes.data)
@@ -210,11 +277,11 @@ const Chat: React.FC = () => {
         conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
         payload: {
           file: {
-            url
+            url,
           },
           duration: res.duration,
-          size: res.size
-        }
+          size: res.size,
+        },
       })
 
       sendMessageFun(message, 'video')
@@ -222,7 +289,7 @@ const Chat: React.FC = () => {
       console.error('选择视频失败:', error)
       Taro.showToast({
         title: '选择视频失败',
-        icon: 'none'
+        icon: 'none',
       })
     }
   }
@@ -232,7 +299,7 @@ const Chat: React.FC = () => {
     try {
       const res = await Taro.chooseMessageFile({
         count: 1,
-        type: 'file'
+        type: 'file',
       })
 
       const file = res.tempFiles[0]
@@ -241,8 +308,8 @@ const Chat: React.FC = () => {
         filePath: file.path,
         name: 'file',
         header: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       })
 
       const { url } = JSON.parse(uploadRes.data)
@@ -256,9 +323,9 @@ const Chat: React.FC = () => {
             type: 'file',
             url,
             name: file.name,
-            size: file.size
-          })
-        }
+            size: file.size,
+          }),
+        },
       })
 
       sendMessageFun(message, 'file')
@@ -266,9 +333,16 @@ const Chat: React.FC = () => {
       console.error('选择文件失败:', error)
       Taro.showToast({
         title: '选择文件失败',
-        icon: 'none'
+        icon: 'none',
       })
     }
+  }
+
+  const chooseBigFile = () => {
+    Taro.navigateTo({
+      url: `/pages/file-upload/index?backUrl=${encodeURIComponent(`chat${location.search}`)}`,
+    })
+    // setOpenFileUpload(true)
   }
 
   const sendMessageFun = (message, type) => {
@@ -383,9 +457,11 @@ const Chat: React.FC = () => {
       case 'TIMTextElem':
         return <Text className="select-text">{item.payload.text}</Text>
       case 'TIMImageElem':
-        return <Image src={item.payload.imageInfoArray[0].url} mode="aspectFit" className="max-w-[200px] max-h-[200px]" />
+        return (
+          <Image src={item.payload.imageInfoArray[0].url} mode="aspectFit" className="max-w-[200px] max-h-[200px]" />
+        )
       case 'TIMVideoElem':
-        return <Video src={item.payload.videoUrl} className="max-w-[200px] max-h-[200px]" />
+        return <Video svgSrc={item.payload.videoUrl} className="max-w-[200px] max-h-[200px]" />
       case 'TIMCustomElem':
         const data = item.payload.data
         switch (data.type) {
@@ -493,6 +569,37 @@ const Chat: React.FC = () => {
 
   console.log(scrollIntoView, 'scrollIntoViewscrollIntoViewscrollIntoView')
 
+  // 加载历史消息
+  const loadHistoryMessages = async () => {
+    try {
+      const messageList = await tim.getMessageList({
+        conversationID: messageToImId,
+        count: 15,
+        nextReqMessageID: nextReqMessageID.current,
+      })
+
+      if (messageList.data.messageList.length > 0) {
+        nextReqMessageID.current = messageList.data.nextReqMessageID
+        return messageList.data.messageList
+      }
+      return []
+    } catch (error) {
+      console.error('获取历史消息失败:', error)
+      return []
+    }
+  }
+
+  // 渲染消息项
+  const renderMessageItem = (message: Message, index: number) => {
+    return (
+      <MessageItem
+        key={message.ID}
+        message={message}
+        isSelf={message.from === timUser.userId}
+      />
+    )
+  }
+
   return (
     <View className="msg-room  flex flex-col h-[100vh]">
       <View className="h-[58Px] z-50 sticky top-0 flex shrink-0 items-center justify-center border-0 !border-b border-solid border-[#b9b8b8] bg-gray-50">
@@ -548,7 +655,7 @@ const Chat: React.FC = () => {
         style={{
           height: `${fullHeight - 94 - 58}Px !important`,
         }}
-        scrollIntoViewAlignment="start"
+        scrollIntoViewAlignment="nearest"
         scrollIntoView={scrollIntoView}
         upperThreshold={100}
         scrollTop={scrollTop}
@@ -595,75 +702,109 @@ const Chat: React.FC = () => {
       </ScrollView>
 
       <View
-        className="footer flex absolute flex-col shrink-0 w-full bg-red-50 p-3 pt-1 pb-8 box-border text-red-500"
+        className="footer flex absolute flex-col shrink-0 w-full bg-gray-100 p-3 pt-1 pb-8 box-border text-red-500"
         style={{
           top: `${fullHeight - 94}Px`,
         }}
       >
         <View className="flex items-center gap-3">
-          <View
-            className={isRecording ? 'animate-pulse' : ''}
-            onTouchStart={startRecording}
-            onTouchEnd={stopRecording}
-          >
-            <VolumeMax size={24} />
-          </View>
-          <View
-            className="chat-input flex-auto flex items-center relative shrink-0 min-h-[40PX]"
-            style={
-              {
-                ['--nutui-textarea-padding']: '8px 40px 8px 8px',
-              } as CSSProperties
-            }
-          >
-            <TextArea
-              autoSize
-              placeholder=""
-              name="value1"
-              value={sendMsg}
-              onChange={(value) => setSendMsg(value)}
-              onConfirm={() => handleSend()}
-              onFocus={() => {
-                setShowMore(false)
-                setShowEmoji(false)
-                setIsOnInput(true)
-                Taro.pageScrollTo({
-                  scrollTop: 0,
-                  duration: 200,
-                })
+          {isRecording ? (
+            <View
+              className={isRecording ? 'animate-pulse' : ''}
+              onClick={() => {
+                setIsRecording(true)
               }}
-              onBlur={() => {
-                setIsOnInput(false)
-              }}
-              className=" pr-10 box-border"
-              style={{
-                maxHeight: '48Px',
-                height: '32Px !important',
-                lineHeight: '24Px',
-              }}
-            />
-
-            <View className=" absolute w-0 right-0">
-              {isOnInput ? (
-                <Button type="primary" size="mini" className="relative left-[-32Px]">
-                  键盘
-                </Button>
-              ) : (
-                <Dongdong
-                  className=" relative left-[-32Px]"
-                  size={24}
-                  onClick={() => {
-                    setShowEmoji(true)
-                    setShowMore(false)
-                    Taro.pageScrollTo({
-                      scrollTop: 307,
-                      duration: 200,
-                    })
-                  }}
-                />
-              )}
+            >
+              <VolumeMax size={24} />
             </View>
-          </View>
+          ) : (
+            <Button
+              type="primary"
+              size="mini"
+              className="relative left-[-32Px]"
+              onClick={() => {
+                setIsRecording(false)
+                textAreaRef.current.focus()
+              }}
+            >
+              键盘
+            </Button>
+          )}
+          {isRecording ? (
+            <Text
+              className="bg-red-200 rounded-sm p-1"
+              onTouchStart={startRecording}
+              onTouchEnd={stopRecording}
+              onTouchCancel={stopRecording}
+            >
+              {recordingTime > 100 ? `${recordingTime / 100}s` : '长按发送语音'}
+            </Text>
+          ) : (
+            <View
+              className="chat-input flex-auto flex items-center relative shrink-0 min-h-[40PX]"
+              style={
+                {
+                  ['--nutui-textarea-padding']: '8px 40px 8px 8px',
+                } as CSSProperties
+              }
+            >
+              <TextArea
+                ref={textAreaRef}
+                autoSize
+                placeholder=""
+                name="value1"
+                value={sendMsg}
+                onChange={(value) => setSendMsg(value)}
+                onConfirm={() => handleSend()}
+                onFocus={() => {
+                  setShowMore(false)
+                  setShowEmoji(false)
+                  setIsOnInput(true)
+                  Taro.pageScrollTo({
+                    scrollTop: 0,
+                    duration: 200,
+                  })
+                }}
+                onBlur={() => {
+                  setIsOnInput(false)
+                }}
+                className=" pr-10 box-border"
+                style={{
+                  maxHeight: '48Px',
+                  height: '32Px !important',
+                  lineHeight: '24Px',
+                }}
+              />
+
+              <View className=" absolute w-0 right-0">
+                {isOnInput ? (
+                  <Dongdong
+                    className=" relative left-[-32Px]"
+                    size={24}
+                    onClick={() => {
+                      setShowEmoji(true)
+                      setShowMore(false)
+                      Taro.pageScrollTo({
+                        scrollTop: 307,
+                        duration: 200,
+                      })
+                    }}
+                  />
+                ) : (
+                  <Button
+                    type="primary"
+                    size="mini"
+                    className="relative left-[-32Px]"
+                    onClick={() => {
+                      textAreaRef.current.focus()
+                    }}
+                  >
+                    键盘
+                  </Button>
+                )}
+              </View>
+            </View>
+          )}
           <View className="flex items-center justify-center rounded-full border-solid border-red-500 box-border border">
             <Add
               size={20}
@@ -682,16 +823,24 @@ const Chat: React.FC = () => {
         <View
           className={`mt-2 border-0 !border-t border-solid border-[#e2e2e2] transition-all  ${showMore ? 'h-[250Px] opacity-100' : 'h-0 opacity-0 pointer-events-none'}`}
         >
-          <Button
-            onClick={() => {
-              Taro.navigateTo({
-                url: `/pages/file-upload/index?backUrl=${encodeURIComponent(`chat${location.search}`)}`,
-              })
-              // setOpenFileUpload(true)
-            }}
-          >
-            大文件上传
-          </Button>
+          <View className="flex items-center justify-around mt-2">
+            <View className="flex flex-col items-center" onClick={chooseImage}>
+              <ImageIcon size={24} />
+              <Text className="text-xs mt-1">图片</Text>
+            </View>
+            <View className="flex flex-col items-center" onClick={chooseVideo}>
+              <Video size={24} />
+              <Text className="text-xs mt-1">视频</Text>
+            </View>
+            <View className="flex flex-col items-center" onClick={chooseFile}>
+              <Top size={24} />
+              <Text className="text-xs mt-1">聊天文件</Text>
+            </View>
+            <View className="flex flex-col items-center" onClick={chooseBigFile}>
+              <Top size={24} />
+              <Text className="text-xs mt-1">大文件发送</Text>
+            </View>
+          </View>
         </View>
         <View
           className={`chat-emojis pt-2 transition-all  ${showEmoji ? 'h-[307Px] opacity-100' : 'h-0 opacity-0 pointer-events-none'}`}
@@ -722,20 +871,6 @@ const Chat: React.FC = () => {
             itemEqual={true}
           />
         </View>
-        <View className="flex items-center justify-around mt-2">
-          <View className="flex flex-col items-center" onClick={chooseImage}>
-            <ImageIcon size={24} />
-            <Text className="text-xs mt-1">图片</Text>
-          </View>
-          <View className="flex flex-col items-center" onClick={chooseVideo}>
-            <Video size={24} />
-            <Text className="text-xs mt-1">视频</Text>
-          </View>
-          <View className="flex flex-col items-center" onClick={chooseFile}>
-            <Top size={24} />
-            <Text className="text-xs mt-1">文件</Text>
-          </View>
-        </View>
       </View>
       {openFileUpload && (
         <WebView
@@ -746,9 +881,16 @@ const Chat: React.FC = () => {
           }}
         />
       )}
-      <Overlay visible={!isLoaded}>
-        <Loading />
-      </Overlay>
+      <UpperLoadScrollView
+        onLoadMore={loadHistoryMessages}
+        renderItem={renderMessageItem}
+        renderSkeleton={() => <MessageSkeleton />}
+        className="message-list"
+        emptyText="暂无消息"
+        loadingText="加载历史消息..."
+        noMoreText="已加载全部历史消息"
+        latestText="已显示最新消息"
+      />
     </View>
   )
 }

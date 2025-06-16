@@ -19,8 +19,6 @@ import { getMessageList, useImStore, useImStoreReset } from '@/models/im'
 import { utils } from '@/libs'
 import { IDataResponse, IGetOptionsWithoutParams } from 'types/http'
 import { IIMUserInfo } from 'types/im'
-import { Chat } from '@/pages/chat'
-import FileUpload from '@/tabs/pages/file-upload'
 
 export default function Index() {
   const setIsSDKReady = useImStore.use.setIsSDKReady()
@@ -31,16 +29,14 @@ export default function Index() {
   const isSDKReady = useImStore.use.isSDKReady()
   const setIminstance = useImStore.use.setIminstance()
   const setConversationList = useImStore.use.setConversationList()
-  const conversationList = useImStore.use.conversationList()
-  const messageMap = useImStore.use.messageMap()
+  const setIsImLogin = useImStore.use.setIsImLogin()
   const setMessageMapById = useImStore.use.setMessageMapById()
+  const setIsImConnectReady = useImStore.use.setIsImConnectReady()
 
-  console.log(location.href, '44444444444444444')
 
   const isWeapp = Taro.getEnv() === Taro.ENV_TYPE.WEAPP
 
   const lastTab = Taro.getStorageSync('lastTab')
-  console.log(lastTab, 'lastTablastTablastTablastTablastTab')
 
   const getImUserInfo = useCallback(async () => {
     const res = await request<IDataResponse<IIMUserInfo>, IGetOptionsWithoutParams>('/im/userSig', {
@@ -64,12 +60,15 @@ export default function Index() {
         {
           onImLogin: (isImLogin: boolean) => {
             console.log(isImLogin, 'isImLogin')
+            setIsImLogin(isImLogin)
           },
           onSDKReady: (eventName: string) => {
             console.log(eventName, 'eventName')
+            setIsImConnectReady(true)
           },
           onSDKNotReady: (eventName: string) => {
             console.log(eventName, 'eventName')
+            setIsImConnectReady(false)
           },
           onMessage: (conversationId: string, item: any) => {
             console.log(conversationId, 'msg', item)
@@ -116,21 +115,6 @@ export default function Index() {
     }
   }, [token, getImUserInfo])
 
-  useEffect(() => {
-    useImStoreReset()
-    Taro.getEnv() === Taro.ENV_TYPE.WEAPP
-      ? __non_webpack_require__.async('../../im-sdk/pages/blank/index')
-      : import('../../im-sdk/pages/blank/index')
-    utils.onIMSDKReady(() => {
-      console.log('onIMSDKReady')
-      setIsSDKReady(true)
-    })
-    return () => {
-      console.log(im, 'im11111111111111')
-
-      im?.destroy?.()
-    }
-  }, [])
 
   const basename = isWeapp ? '/pages/index/index' : undefined
 
@@ -155,7 +139,7 @@ export default function Index() {
             <Route path="magazine" element={<Magazine />}></Route>
             <Route path="mine" element={<Mine />}></Route>
             <Route path="login" element={<Login />}></Route>
-            <Route index element={<Navigate to={lastTab || '/factory'} />}></Route>
+            <Route index element={<Navigate to={lastTab ?? '/factory'} />}></Route>
             <Route path="*" element={<NotFound />}></Route>
           </Route>
         </Routes>

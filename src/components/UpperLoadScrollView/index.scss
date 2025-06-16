@@ -1,0 +1,80 @@
+.upper-load-scroll-view {
+  display: flex;
+  flex-direction: column-reverse; /* 反转布局使新数据在顶部 */
+}
+
+.header-loader {
+  padding: 20px;
+  text-align: center;
+
+  .loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #07c160;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+  }
+
+  .loading-text {
+    color: #666;
+    font-size: 14px;
+  }
+
+  .no-more {
+    color: #999;
+    font-size: 14px;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.scroll-item {
+  opacity: 0; /* 初始透明，动画后显示 */
+  transform: translateY(-20px);
+}
+
+.skeleton-container {
+  padding: 20px;
+
+  .skeleton-item {
+    margin-bottom: 20px;
+    animation: skeleton-loading 1.5s infinite;
+  }
+}
+
+@keyframes skeleton-loading {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+.latest-indicator {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-size: 14px;
+}

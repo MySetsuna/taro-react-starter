@@ -10,6 +10,8 @@ interface State {
   im: any
   conversationList: any[],
   pinnedList: any[]
+  isImLogin: boolean
+  isImConnectReady: boolean
 }
 interface Action {
   setIsSDKReady: (value: boolean) => void
@@ -18,6 +20,8 @@ interface Action {
   setMessageMapById: (id: string, list: any[]) => void
   getMessageMapById: (id: string) => any[]
   setPinnedList: (list: any) => void
+  setIsImLogin: (value: boolean) => void
+  setIsImConnectReady: (value: boolean) => void
 }
 
 const store = create<State & Action>()(
@@ -28,6 +32,8 @@ const store = create<State & Action>()(
       conversationList: [],
       pinnedList: [],
       isSDKReady: false,
+      isImLogin: false,
+      isImConnectReady: false,
       setIsSDKReady: (value) => set({ isSDKReady: value }),
       setIminstance: (im) => set({ im }),
       setConversationList: (list) => set({ conversationList: list }),
@@ -40,6 +46,8 @@ const store = create<State & Action>()(
           set({ pinnedList: list })
         }
       },
+      setIsImLogin: (value) => set({ isImLogin: value }),
+      setIsImConnectReady: (value) => set({ isImConnectReady: value }),
     }),
     {
       name: StorageSceneKey.IM,
@@ -50,7 +58,8 @@ const store = create<State & Action>()(
 
 export const useImStore = createSelectors(store)
 export function useImStoreReset() {
-  store.setState({ im: null })
+  store.getState().im?.logout?.()
+  store.setState({ im: null, isSDKReady: false, isImLogin: false, isImConnectReady: false })
 }
 
 export function getMessageList(conversationId: string) {
