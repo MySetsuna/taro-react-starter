@@ -254,7 +254,7 @@ function Message() {
                     <View className="flex items-center">
                       {!pinnedList.includes(item.conversationID) ? (
                         <View
-                          className=" bg-sky-300 w-[50PX] shrink-0 p-2 h-[66Px] text-white flex items-center justify-center text-nowrap"
+                          className=" bg-sky-300 w-[90PX] text-sm shrink-0 p-2 h-[67Px] text-white flex items-center justify-center text-nowrap"
                           onClick={() => {
                             setTimeout(() => {
                               onPin(item.conversationID)
@@ -265,7 +265,7 @@ function Message() {
                         </View>
                       ) : (
                         <View
-                          className=" bg-yellow-300 w-[50PX] p-2 h-[66Px] text-white flex items-center justify-center text-nowrap"
+                          className=" bg-yellow-300 w-[90PX] text-sm p-2 h-[67Px] text-white flex items-center justify-center text-nowrap"
                           onClick={() => {
                             setTimeout(() => {
                               onUnPin(item.conversationID)
@@ -276,7 +276,7 @@ function Message() {
                         </View>
                       )}
                       <View
-                        className=" bg-red-600 w-[50PX] shrink-0 p-2 h-[66Px] text-white flex items-center justify-center text-nowrap"
+                        className=" bg-red-600 w-[90PX] text-sm shrink-0 p-2 h-[67Px] text-white flex items-center justify-center text-nowrap"
                         onClick={() => onDelete(item.conversationID)}
                       >
                         删除

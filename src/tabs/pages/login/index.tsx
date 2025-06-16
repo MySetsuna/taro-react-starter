@@ -27,7 +27,7 @@ const Login = () => {
   const navigate = useNavigate()
 
   const login = async () => {
-    const res = await request<IDataResponse<ILoginInfo>,ISMSLoginOptions>('/auth/login', {
+    const res = await request<IDataResponse<ILoginInfo>, ISMSLoginOptions>('/auth/login', {
       method: 'POST',
       data: {
         userType: 'app_user',
@@ -185,11 +185,12 @@ const Login = () => {
             // onClick={wechatLogin}
             openType="getPhoneNumber"
             onGetPhoneNumber={(e) => {
-              if (e.detail) {
+              try {
                 console.log(e.detail, 'e.detail')
                 wechatLogin()
                 // wechatLogin(e.detail.iv)
-              } else {
+              } catch (error) {
+                console.log(error, 'error')
                 wechatLogin()
               }
             }}

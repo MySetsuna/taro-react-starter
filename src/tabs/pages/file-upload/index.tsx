@@ -16,7 +16,7 @@ export default function FileUpload() {
   console.log(baseUrl, 'baseUrl', loginInfo, token, 'loginInfo', backUrl, 'backUrl')
   return (
     <WebView
-      src={`http://26.26.26.1:10086/#/pages/index/index?clientId=${loginInfo.client_id}&token=${token}&baseUrl=${baseUrl}&backUrl=${backUrl}`}
+      src={`http://192.168.0.149:10086/#/pages/index/index?clientId=${loginInfo.client_id}&token=${token}&baseUrl=${baseUrl}&backUrl=${backUrl}`}
       onMessage={(event) => {
         console.log(event, 'event')
         navigate(backUrl)
