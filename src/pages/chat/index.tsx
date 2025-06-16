@@ -25,6 +25,7 @@ import {
   Overlay,
   TextArea,
   VirtualList,
+  CircleProgress,
 } from '@nutui/nutui-react-taro'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
@@ -34,6 +35,7 @@ import './index.scss'
 import { useNavTitle } from '@/hooks'
 import { request } from '@/api'
 import { IDataResponse, IRequestOptionsWithType } from 'types/http'
+import SoundMessage from '@/components/SoundMessage'
 
 const Chat: React.FC = () => {
   const params = Taro.getCurrentInstance().router?.params
@@ -62,6 +64,7 @@ const Chat: React.FC = () => {
   const [touchStartY, setTouchStartY] = useState(0)
   const [isInCancelArea, setIsInCancelArea] = useState(false)
   const shouldSendMessage = useRef(true)
+  const MAX_RECORDING_TIME = 60 // 最大录音时间60秒
 
   const [scrollTop, setScrollTop] = useState(99999)
   const [sendMsg, setSendMsg] = useState('')
@@ -72,11 +75,15 @@ const Chat: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false)
   const [scrollIntoView, setScrollIntoView] = useState('')
   const [is_lock, setis_lock] = useState(true)
+  const [isClosing, setIsClosing] = useState(false)
 
   const token = useUserStore.use.token()
   const baseUrl = process.env.TARO_APP_API
 
   const textAreaRef = useRef<any>(null)
+
+  const [progress, setProgress] = useState(0)
+  console.log(myMessages, 'myMessages')
 
   // 播放音效
   const playSound = (type: 'start' | 'cancel' | 'end') => {
@@ -107,6 +114,7 @@ const Chat: React.FC = () => {
       const touch = e.touches[0]
       setTouchStartY(touch.clientY)
       setIsRecording(true)
+      setIsInCancelArea(false)
       setShowRecordingOverlay(true)
       setRecordingStatus('recording')
       setRecordingTime(0)
@@ -115,7 +123,14 @@ const Chat: React.FC = () => {
       vibrate('short')
 
       recordingTimer.current = setInterval(() => {
-        setRecordingTime((prev) => prev + 1)
+        setRecordingTime((prev) => {
+          const newTime = prev + 1
+          if (newTime >= MAX_RECORDING_TIME) {
+            // 达到最大录音时间，自动停止并发送
+            stopRecording()
+          }
+          return newTime
+        })
       }, 1000)
 
       recorderManager.current.onStart(() => {
@@ -144,7 +159,7 @@ const Chat: React.FC = () => {
       })
 
       recorderManager.current.start({
-        duration: 60000,
+        duration: MAX_RECORDING_TIME * 1000, // 设置最大录音时间为60秒
         sampleRate: 44100,
         numberOfChannels: 1,
         encodeBitRate: 192000,
@@ -160,38 +175,60 @@ const Chat: React.FC = () => {
     }
   }
 
-  // 处理语音上传
-  const handleVoiceUpload = (tempFilePath: string) => {
-    Taro.uploadFile({
-      url: `${baseUrl}/upload`,
-      filePath: tempFilePath,
-      name: 'file',
-      header: {
-        Authorization: `Bearer ${token}`,
-      },
-      success: (uploadRes) => {
-        const { url } = JSON.parse(uploadRes.data)
-        const message = tim.createCustomMessage({
+  // 创建多媒体消息
+  const createMediaMessage = (file: any, mediaType: 'image' | 'video' | 'voice') => {
+    const conversationType = type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C
+    let message
+    console.log(file, 'filefilefile')
+
+    switch (mediaType) {
+      case 'image':
+        message = tim.createImageMessage({
           to: messageToImId,
-          conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
+          conversationType,
           payload: {
-            data: JSON.stringify({
-              type: 'voice',
-              url,
-              duration: recordingTime,
-            }),
+            file,
+          },
+          onProgress(event) {
+            setProgress(event)
           },
         })
-        sendMessageFun(message, 'voice')
-      },
-      fail: (error) => {
-        console.error('上传录音失败:', error)
-        Taro.showToast({
-          title: '上传录音失败',
-          icon: 'none',
+        break
+      case 'video':
+        message = tim.createVideoMessage({
+          to: messageToImId,
+          conversationType,
+          payload: {
+            file,
+          },
         })
+        break
+      case 'voice':
+        message = tim.createAudioMessage({
+          to: messageToImId,
+          conversationType,
+          payload: {
+            file,
+          },
+        })
+        break
+    }
+    console.log(message, 'send message ')
+
+    if (message) {
+      sendMessageFun(message, mediaType)
+    }
+  }
+
+  // 处理语音上传
+  const handleVoiceUpload = (tempFilePath: string) => {
+    createMediaMessage(
+      {
+        path: tempFilePath,
+        duration: recordingTime,
       },
-    })
+      'voice'
+    )
   }
 
   // 停止录音
@@ -199,11 +236,23 @@ const Chat: React.FC = () => {
     if (recordingTimer.current) {
       clearInterval(recordingTimer.current)
     }
-    setIsRecording(false)
-    setShowRecordingOverlay(false)
-    setRecordingTime(0)
-    setIsInCancelArea(false)
-    recorderManager.current.stop()
+    if (shouldSendMessage.current) {
+      setShowRecordingOverlay(false)
+      setIsInCancelArea(false)
+      recorderManager.current.stop()
+      setTimeout(() => {
+        setRecordingTime(0)
+      }, 800)
+    } else {
+      // 取消发送时，立即显示取消状态，然后快速渐变关闭
+      setIsClosing(true)
+      setShowRecordingOverlay(false)
+      recorderManager.current.stop()
+      setTimeout(() => {
+        setRecordingTime(0)
+        setIsClosing(false)
+      }, 800)
+    }
   }
 
   // 取消录音
@@ -245,9 +294,7 @@ const Chat: React.FC = () => {
         sourceType: ['album', 'camera'],
       })
 
-      for (const tempFile of res.tempFilePaths) {
-        await handleFileUpload(tempFile, 'image')
-      }
+      createMediaMessage(res, 'image')
     } catch (error) {
       console.error('选择图片失败:', error)
       Taro.showToast({
@@ -266,10 +313,13 @@ const Chat: React.FC = () => {
         maxDuration: 60,
       })
 
-      await handleFileUpload(res.tempFilePath, 'video', {
-        duration: res.duration,
-        size: res.size,
-      })
+      createMediaMessage(
+        {
+          path: res.tempFilePath,
+          duration: res.duration,
+        },
+        'video'
+      )
     } catch (error) {
       console.error('选择视频失败:', error)
       Taro.showToast({
@@ -288,74 +338,25 @@ const Chat: React.FC = () => {
       })
 
       const file = res.tempFiles[0]
-      await handleFileUpload(file.path, 'file', {
-        name: file.name,
-        size: file.size,
+      const message = tim.createCustomMessage({
+        to: messageToImId,
+        conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
+        payload: {
+          data: JSON.stringify({
+            type: 'file',
+            path: file.path,
+            name: file.name,
+            size: file.size,
+          }),
+        },
       })
+      sendMessageFun(message, 'file')
     } catch (error) {
       console.error('选择文件失败:', error)
       Taro.showToast({
         title: '选择文件失败',
         icon: 'none',
       })
-    }
-  }
-
-  // 处理文件上传
-  const handleFileUpload = async (filePath: string, fileType: 'image' | 'video' | 'file', extraData?: any) => {
-    const uploadRes = await Taro.uploadFile({
-      url: `${baseUrl}/upload`,
-      filePath,
-      name: 'file',
-      header: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-
-    const { url } = JSON.parse(uploadRes.data)
-    let message
-
-    const conversationType = type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C
-
-    switch (fileType) {
-      case 'image':
-        message = tim.createImageMessage({
-          to: messageToImId,
-          conversationType,
-          payload: {
-            file: { url },
-          },
-        })
-        break
-      case 'video':
-        message = tim.createVideoMessage({
-          to: messageToImId,
-          conversationType,
-          payload: {
-            file: { url },
-            duration: extraData.duration,
-            size: extraData.size,
-          },
-        })
-        break
-      case 'file':
-        message = tim.createCustomMessage({
-          to: messageToImId,
-          conversationType,
-          payload: {
-            data: JSON.stringify({
-              type: 'file',
-              url,
-              name: extraData.name,
-              size: extraData.size,
-            }),
-          },
-        })
-        break
-    }
-
-    if (message) {
-      sendMessageFun(message, fileType)
     }
   }
 
@@ -394,14 +395,7 @@ const Chat: React.FC = () => {
     promise
       .then((imResponse) => {
         const messageList = imResponse.data.messageList
-        messageList.forEach((event) => {
-          if (event.type === 'TIMCustomElem') {
-            if (typeof event.payload.data === 'string' && event.payload.data) {
-              const new_data = JSON.parse(event.payload.data)
-              event.payload.data = new_data
-            }
-          }
-        })
+
         const newNextReqMessageID = imResponse.data.nextReqMessageID
         const newIsCompleted = imResponse.data.isCompleted
         setMessageRead()
@@ -466,6 +460,17 @@ const Chat: React.FC = () => {
       case 'TIMImageElem':
         return (
           <Image src={item.payload.imageInfoArray[0].url} mode="aspectFit" className="max-w-[200px] max-h-[200px]" />
+        )
+      case 'TIMSoundElem':
+        return (
+          <SoundMessage
+            url={item.payload.url}
+            duration={item.payload.second}
+            onConvertVoiceToText={async () => {
+              const res = await tim.convertVoiceToText({ message: item })
+              return res.data.result
+            }}
+          />
         )
       case 'TIMVideoElem':
         return <Video svgSrc={item.payload.videoUrl} className="max-w-[200px] max-h-[200px]" />
@@ -577,12 +582,14 @@ const Chat: React.FC = () => {
   }
 
   const handleKeyboardClick = () => {
-    textAreaRef.current.focus()
     setIsRecording(false)
     Taro.pageScrollTo({
       scrollTop: 20,
       duration: 200,
     })
+    setTimeout(() => {
+      textAreaRef.current.focus()
+    }, 100)
   }
 
   const handleTextAreaFocus = () => {
@@ -601,6 +608,16 @@ const Chat: React.FC = () => {
 
   const handleEmojiSelect = (emoji: string) => {
     setSendMsg((prev) => prev + emoji)
+  }
+
+  const handleVoiceClick = () => {
+    setIsRecording(true)
+    setShowEmoji(false)
+    setShowMore(false)
+    Taro.pageScrollTo({
+      scrollTop: 0,
+      duration: 200,
+    })
   }
 
   useEffect(() => {
@@ -699,11 +716,27 @@ const Chat: React.FC = () => {
 
       <Overlay visible={showRecordingOverlay} zIndex={1000}>
         <View className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <View className="bg-white rounded-lg p-8 flex flex-col items-center">
-            <View
-              className={`w-24 h-24 rounded-full ${isInCancelArea ? 'bg-gray-500' : 'bg-red-500'} flex items-center justify-center mb-4 transition-colors duration-200`}
-            >
-              {isInCancelArea ? <View className="text-white text-4xl">×</View> : <VolumeMax size={48} color="white" />}
+          <View
+            className={`bg-white rounded-lg p-8 flex flex-col items-center transition-opacity duration-500 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+          >
+            <View className="relative w-[100Px] h-[100Px] mb-4 flex items-center justify-center">
+              <View
+                className={`w-[94Px] h-[94Px] absolute rounded-full ${isInCancelArea ? 'bg-gray-500' : 'bg-red-100'} flex items-center justify-center transition-colors duration-200 shrink-0`}
+              >
+                {isInCancelArea ? (
+                  <View className="text-white text-4xl">×</View>
+                ) : (
+                  <VolumeMax size={48} color="#ff0f23" />
+                )}
+              </View>
+              <CircleProgress
+                percent={(recordingTime / MAX_RECORDING_TIME) * 100}
+                strokeWidth={4}
+                radius={50}
+                color={!isInCancelArea ? '#ff0f23' : 'black'}
+                background="transparent"
+                className="shrink-0 z-50 w-[100Px] h-[100Px] absolute top-0 left-0"
+              ></CircleProgress>
             </View>
             <Text className="text-lg font-medium">
               {recordingStatus === 'cancel' ? '松开手指，取消发送' : '手指上滑，取消发送'}
@@ -721,18 +754,7 @@ const Chat: React.FC = () => {
       >
         <View className="flex items-center gap-3">
           {!isRecording ? (
-            <View
-              className={isRecording ? 'animate-pulse' : ''}
-              onClick={() => {
-                setIsRecording(true)
-                setShowEmoji(false)
-                setShowMore(false)
-                Taro.pageScrollTo({
-                  scrollTop: 0,
-                  duration: 200,
-                })
-              }}
-            >
+            <View className={isRecording ? 'animate-pulse' : ''} onClick={handleVoiceClick}>
               <VolumeMax size={24} />
             </View>
           ) : (
@@ -748,7 +770,7 @@ const Chat: React.FC = () => {
               onTouchCancel={cancelRecording}
               onTouchMove={handleTouchMove}
             >
-              {recordingTime > 100 ? `${recordingTime / 100}s` : '长按发送语音'}
+              {showRecordingOverlay ? `${recordingTime}s` : '长按发送语音'}
             </View>
           ) : (
             <View

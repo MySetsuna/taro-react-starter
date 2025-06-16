@@ -8,3 +8,58 @@
     height: 40px !important;
   }
 }
+
+// 录音相关样式
+.recording-overlay {
+  .recording-circle {
+    position: relative;
+    width: 96px;
+    height: 96px;
+
+    .progress-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 4px solid transparent;
+      border-top-color: #ff4d4f;
+      transition: transform 0.1s linear;
+    }
+
+    .recording-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+
+      &.recording {
+        animation: pulse 1.5s infinite;
+      }
+    }
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
