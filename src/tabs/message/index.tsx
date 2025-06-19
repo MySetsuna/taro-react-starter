@@ -12,7 +12,7 @@ import { useAreaOptions, useFactoryStore, useImStore, useUserStore } from '@/mod
 import { TabBar } from '@/tab-bar'
 import { TABBAR_HEIGHT } from '@/config'
 import { timeFormat } from '@/libs/time-method'
-import { useInterval } from '@/hooks'
+import { useInterval, useNavStyle } from '@/hooks'
 
 const ENPTY_USER_NAME = '未命名用户'
 
@@ -350,4 +350,12 @@ function Message() {
   )
 }
 
-export default Message
+export default useNavStyle(Message, {
+  navigationBarTitle: {
+    title: '消息',
+  },
+  navigationBarColor: {
+    backgroundColor: '#ff0f23',
+    frontColor: '#ffffff',
+  },
+})

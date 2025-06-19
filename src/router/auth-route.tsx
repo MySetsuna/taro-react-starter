@@ -18,7 +18,7 @@ const AuthRoute = () => {
   const isLogged = useUserStore.use.isLogged()
 
   const location = useLocation()
-  const isLogin = token && isLogged
+  const isLogin = !!token && !!isLogged
 
   console.log(location.pathname, 'location.pathname isLogin', isLogin)
 

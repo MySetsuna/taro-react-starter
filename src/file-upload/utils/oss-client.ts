@@ -70,7 +70,7 @@ class AliOssClient implements OssClient {
       parallel: 5,
       headers: {
         'Cache-Control': 'no-cache',
-        'Content-Disposition': file.name,
+        "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`,
         'x-oss-forbid-overwrite': 'true',
       },
       progress: async (p, cpt) => {

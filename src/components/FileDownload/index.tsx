@@ -1,7 +1,7 @@
 import { ArrowDown, Check } from '@nutui/icons-react-taro'
 import { Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 interface FileDownloadProps {
   url: string
@@ -47,55 +47,74 @@ const FileDownload: React.FC<FileDownloadProps> = ({
     setProgress(0)
 
     try {
-      const downloadTask = Taro.downloadFile({
-        filePath: downloadPath ? `${downloadPath}/${fileName}` : undefined,
+      // 下载文件 通过
+      const filePath = `${Taro.env.USER_DATA_PATH}/${fileName}`
+      console.log(filePath, 'filePath')
+
+      Taro.request({
         url,
+        method: 'GET',
+        responseType: 'arraybuffer',
         success: (res) => {
           if (res.statusCode === 200) {
-            Taro.saveFile({
-              tempFilePath: res.tempFilePath,
-              success: (res) => {
-                console.log(res, 'res saveFile')
-                onSuccess?.(res, id)
-                Taro.showToast({
-                  title: `下载完成`,
-                  icon: 'success',
-                })
-                fileSystemManager.current.readdir({
-                  dirPath: downloadPath,
-                  success: (res) => {
-                    console.log(res, 'res readdir')
-                  },
-                })
+            fileSystemManager.current.writeFile({
+              filePath,
+              data: res.data,
+              encoding: 'binary',
+              success: () => {
+                // Taro.saveFile({
+                //   filePath,
+                //   tempFilePath: url,
+                //   success: (saveRes) => {
+                //     onSuccess?.(saveRes, id)
+                //     Taro.showToast({
+                //       title: '下载完成',
+                //       icon: 'success',
+                //     })
+                //   },
+                //   fail: (error) => {
+                //     console.error('保存文件失败:', error)
+                //     onFail?.(error)
+                //     Taro.showToast({
+                //       title: '保存文件失败',
+                //       icon: 'none',
+                //     })
+                //   },
+                // })
+                console.log(filePath, 'filePath')
+
+                onSuccess?.({ savedFilePath: filePath, errMsg: 'success' }, id)
               },
               fail: (error) => {
-                console.error('下载失败:', error)
+                console.error('写入文件失败:', error)
                 onFail?.(error)
+                Taro.showToast({
+                  title: '写入文件失败',
+                  icon: 'none',
+                })
               },
             })
-
-            console.log(res, 'res')
           } else {
+            console.error('下载失败:', res.statusCode)
+            onFail?.(new Error(`下载失败，状态码: ${res.statusCode}`))
             Taro.showToast({
               title: '下载失败',
               icon: 'none',
             })
-            onFail?.(new Error(`下载失败，状态码: ${res.statusCode}`))
           }
         },
         fail: (error) => {
-          console.error('下载失败:', error)
+          console.error('请求失败:', error)
           onFail?.(error)
+          Taro.showToast({
+            title: '请求失败',
+            icon: 'none',
+          })
         },
         complete: () => {
           setIsDownloading(false)
           setProgress(0)
         },
-      })
-
-      // 监听下载进度
-      downloadTask.onProgressUpdate((res) => {
-        setProgress(res.progress)
       })
     } catch (error) {
       console.error('下载出错:', error)
@@ -104,10 +123,20 @@ const FileDownload: React.FC<FileDownloadProps> = ({
     }
   }
 
+  const showSize = useMemo(() => {
+    let showSize = Math.round(size / 1024 / 1024)
+    if (showSize < 1) {
+      return `${Math.ceil(size / 1024)}KB`
+    }
+    if (showSize > 1024) {
+      return `${Math.round(showSize / 1024)}GB`
+    }
+    return `${showSize}MB`
+  }, [size])
   return (
     <View className={className}>
       <View className="text-xs text-gray-500">{fileName}</View>
-      <View className="text-xs text-gray-500">{Math.round(size / 1024 / 1024)}MB</View>
+      <View className="text-xs text-gray-500">{showSize}</View>
       <View className="flex items-center flex-col text-xs">
         {isDownloaded ? (
           <Check
@@ -137,11 +166,8 @@ const FileDownload: React.FC<FileDownloadProps> = ({
         <View
           className="text-xs text-gray-500 underline break-all"
           onClick={() => {
-            fileSystemManager.current.readFile({
-              filePath: savedPath,
-              success: (res) => {
-                console.log(res, 'res fileSystemManager readFile')
-              },
+            Taro.navigateTo({
+              url: `${savedPath}`,
             })
           }}
         >

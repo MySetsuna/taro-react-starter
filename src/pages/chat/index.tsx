@@ -28,13 +28,14 @@ import {
   VirtualList,
   CircleProgress,
   Video,
+  ImagePreview,
 } from '@nutui/nutui-react-taro'
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro from '@tarojs/taro'
-import { useState, useRef, useEffect, CSSProperties, useMemo } from 'react'
+import Taro, { pxTransform } from '@tarojs/taro'
+import { useState, useRef, useEffect, CSSProperties, useMemo, useCallback } from 'react'
 import { emojis } from '../../tabs/message/emoji/data'
 import './index.scss'
-import { useNavTitle } from '@/hooks'
+import { useNavStyle } from '@/hooks'
 import { request } from '@/api'
 import { IDataResponse, IRequestOptionsWithType } from 'types/http'
 import SoundMessage from '@/components/SoundMessage'
@@ -54,7 +55,8 @@ const Chat: React.FC = () => {
   const [conversationID, setConversationID] = useState(cID)
   const [messageToImId, setMessageToImId] = useState(sendId)
 
-  const fullHeight = Taro.getWindowInfo().windowHeight
+  const fullHeight = Taro.getSystemInfoSync().windowHeight
+  console.log(Taro.getSystemInfoSync(), '333333333333333==========')
 
   const [showMore, setShowMore] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
@@ -317,27 +319,29 @@ const Chat: React.FC = () => {
   }
 
   // 选择文件
-  const chooseFile = async () => {
-    try {
-      const res = await Taro.chooseMessageFile({
-        count: 1,
-        type: 'file',
-      })
+  const chooseFile = useCallback(async () => {
+      try {
+        const res = await Taro.chooseMessageFile({
+          count: 1,
+          type: 'file',
+        })
 
-      const message = tim.createFileMessage({
-        to: messageToImId,
-        conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
-        payload: res,
-      })
-      sendMessageFun(message)
-    } catch (error) {
-      console.error('选择文件失败:', error)
-      Taro.showToast({
-        title: '选择文件失败',
-        icon: 'none',
-      })
-    }
-  }
+        console.log(res, 'res')
+
+        const message = tim.createFileMessage({
+          to: messageToImId,
+          conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
+          payload: { file: res },
+        })
+        sendMessageFun(message)
+      } catch (error) {
+        console.error('选择文件失败:', error)
+        Taro.showToast({
+          title: '选择文件失败',
+          icon: 'none',
+        })
+      }
+  }, [messageToImId, type, tim])
 
   const chooseBigFile = () => {
     Taro.navigateTo({
@@ -349,6 +353,7 @@ const Chat: React.FC = () => {
     setMyMessages((prev) => [...prev, message])
     setSendMsg('')
     setShowEmoji(false)
+    setShowMore(false)
     scrollToBottom()
     Taro.pageScrollTo({
       scrollTop: 0,
@@ -560,6 +565,8 @@ const Chat: React.FC = () => {
   }
 
   useEffect(() => {
+    console.log(tim, conversationID, 'tim, conversationID ---------------')
+
     if (tim && conversationID) {
       getMsgList()
       Taro.eventCenter.on('UPLOAD_COMPLETE', (data) => {
@@ -596,19 +603,65 @@ const Chat: React.FC = () => {
     }
   }, [sendId, conversationID])
 
+  const [showPreview, setShowPreview] = useState(false)
+
+  const chatImages = useMemo(() => {
+    const chatImages = []
+    myMessages.forEach((item, index) => {
+      if (item.type === 'TIMImageElem' && item.payload.imageInfoArray) {
+        const [preview] = item.payload.imageInfoArray
+        chatImages.push({
+          src: preview.imageUrl,
+          index,
+        })
+      }
+    })
+    return chatImages
+  }, [myMessages])
+
+  const chatVideos = useMemo(() => {
+    const chatVideos = []
+    myMessages.forEach((item, index) => {
+      if (item.type === 'TIMVideoFileElem' && item.payload.videoFormat) {
+        chatVideos.push({
+          source: {
+            src: item.payload.remoteVideoUrl,
+            type: `video/${item.videoFormat}`,
+          },
+          options: {
+            muted: false,
+            controls: true,
+          },
+          index,
+        })
+      }
+    })
+    return chatVideos
+  }, [myMessages])
+
   const msgDisplay = (item) => {
     switch (item.type) {
       case 'TIMTextElem':
         return <Text className="select-text">{item.payload.text}</Text>
       case 'TIMImageElem':
-        return (
-          <Image
-            src={item.payload.imageInfoArray?.[1].imageUrl}
-            preview={item.payload.imageInfoArray?.[0].imageUrl}
-            mode="aspectFit"
-            className="max-w-[200px] max-h-[200px]"
-          />
-        )
+        if (item.payload.imageInfoArray) {
+          const [preview, show] = item.payload.imageInfoArray
+          return (
+            <Image
+              radius={4}
+              onClick={() => {
+                setShowPreview(true)
+              }}
+              height={show.height}
+              width={show.width}
+              src={show.imageUrl}
+              preview={preview.imageUrl}
+              mode="aspectFit"
+              className="max-w-[75vw] rounded"
+            />
+          )
+        }
+        return <ImageIcon size={40} />
       case 'TIMSoundElem':
         return (
           <SoundMessage
@@ -620,14 +673,28 @@ const Chat: React.FC = () => {
             }}
           />
         )
-      case "TIMVideoFileElem":
+      case 'TIMVideoFileElem':
         return (
           <Video
+            options={{
+              controls: true,
+              muted: true,
+              playsinline: true,
+            }}
+            webkit-playsinline
+            x5-video-player-type="h5-paeg"
+            x5-video-player-fullscreen
+            x5-video-orientation="portraint"
+            style={{
+              height: pxTransform(item.payload.thumbHeight / 2),
+              width: pxTransform(item.payload.thumbWidth / 2),
+              borderRadius: '4px',
+            }}
+            className="max-w-[75vw] rounded"
             source={{
               src: item.payload.remoteVideoUrl,
               type: `video/${item.videoFormat}`,
             }}
-            className="max-w-[200px] max-h-[200px]"
           />
         )
       case 'TIMFileElem':
@@ -635,12 +702,18 @@ const Chat: React.FC = () => {
           <FileDownload
             id={item.payload.uuid}
             isDownloaded={!!fileDownloadMap[item.payload.uuid]}
-            url={item.payload.url}
-            size={item.payload.size}
-            fileName={item.payload.name}
+            url={item.payload.fileUrl}
+            size={item.payload.fileSize}
+            fileName={item.payload.fileName}
             savedPath={fileDownloadMap[item.payload.uuid]?.savedPath}
             onSuccess={(res) => {
-              addFileDownload(item.payload.uuid, item.payload.url, item.payload.size, item.payload.name, res.savedFilePath)
+              addFileDownload(
+                item.payload.uuid,
+                item.payload.url,
+                item.payload.size,
+                item.payload.name,
+                res.savedFilePath
+              )
             }}
           />
         )
@@ -674,6 +747,8 @@ const Chat: React.FC = () => {
         return null
     }
   }
+
+  console.log(fullHeight, 'fullHeight')
 
   return (
     <View className="msg-room flex flex-col h-[100vh]">
@@ -733,7 +808,7 @@ const Chat: React.FC = () => {
                 <View className="chat-r">
                   <View className="chat-text">
                     <View
-                      className={`chat-text-bg box-border rounded leading-[24Px] min-h-[40Px] min-w-[40Px] p-2 ${timUser.userId === item.from ? 'bg-red-100' : 'bg-white'}`}
+                      className={`chat-text-bg box-border rounded leading-[24Px] min-h-[40Px] min-w-[40Px] ${timUser.userId === item.from ? 'bg-red-100' : 'bg-white'}`}
                     >
                       {msgDisplay(item)}
                     </View>
@@ -892,8 +967,22 @@ const Chat: React.FC = () => {
           />
         </View>
       </View>
+      <ImagePreview
+        visible={showPreview}
+        images={chatImages}
+        videos={chatVideos}
+        onClose={() => setShowPreview(false)}
+      />
     </View>
   )
 }
 
-export default useNavTitle(Chat, '消息')
+export default useNavStyle(Chat, {
+  navigationBarTitle: {
+    title: '消息',
+  },
+  navigationBarColor: {
+    backgroundColor: '#ff0f23',
+    frontColor: '#ffffff',
+  },
+})

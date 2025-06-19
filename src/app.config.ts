@@ -2,7 +2,7 @@ export default defineAppConfig({
   lazyCodeLoading: 'requiredComponents',
   pages: ['pages/index/index', 'pages/file-upload/index', 'pages/chat/index'],
   animation: true,
-  entryPagePath: 'pages/index/index',
+  entryPagePath: 'im-sdk/pages/blank/index',
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#fff',

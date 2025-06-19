@@ -1,16 +1,20 @@
 import { useUserStore } from '@/models'
+import { Navigate, Route, Routes } from 'react-router'
 import Taro, { useLaunch } from '@tarojs/taro'
 import Factory from '@/tabs/factory'
 import Message from '@/tabs/message'
 import Moments from '@/tabs/moments'
 import Magazine from '@/tabs/magazine'
 import Mine from '@/tabs/mine'
+import AuthRoute from '@/router/auth-route'
 import { ConfigProvider } from '@nutui/nutui-react-taro'
 import { View } from '@tarojs/components'
+import { BrowserRouter } from 'react-router-dom'
 
 import './index.scss'
+import Login from '../../tabs/pages/login'
 import { request, requestInstance } from '@/api'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { getMessageList, useImStore, useImStoreReset } from '@/models/im'
 import { utils } from '@/libs'
 import { IDataResponse, IGetOptionsWithoutParams } from 'types/http'
@@ -29,7 +33,10 @@ export default function Index() {
   const setMessageMapById = useImStore.use.setMessageMapById()
   const setIsImConnectReady = useImStore.use.setIsImConnectReady()
 
-  const [currentTab, setCurrentTab] = useState('factory')
+
+  const isWeapp = Taro.getEnv() === Taro.ENV_TYPE.WEAPP
+
+  const lastTab = Taro.getStorageSync('lastTab')
 
   const getImUserInfo = useCallback(async () => {
     const res = await request<IDataResponse<IIMUserInfo>, IGetOptionsWithoutParams>('/im/userSig', {
@@ -75,11 +82,8 @@ export default function Index() {
               }
             }
           },
-          onMessageReaded: (conversationID: any) => {
-            console.log(conversationID, 'conversationID', 'onMessageReaded')
-            // im.setMessageRead({
-            //   conversationID,
-            // })
+          onMessageReaded: (msg: any, msgList: any) => {
+            console.log(msg, 'msg', msgList)
           },
           onUpdateRoomNum: (num: number) => {
             console.log(num, 'num')
@@ -111,23 +115,8 @@ export default function Index() {
     }
   }, [token, getImUserInfo])
 
-  // 渲染当前选中的页面
-  const renderCurrentPage = () => {
-    switch (currentTab) {
-      case 'factory':
-        return <Factory />
-      case 'message':
-        return <Message />
-      case 'moments':
-        return <Moments />
-      case 'magazine':
-        return <Magazine />
-      case 'mine':
-        return <Mine />
-      default:
-        return <Factory />
-    }
-  }
+
+  const basename = isWeapp ? '/pages/index/index' : undefined
 
   return (
     <ConfigProvider
@@ -140,7 +129,25 @@ export default function Index() {
       }}
     >
       <View style={{ color: 'transparent' }}></View>
-      {renderCurrentPage()}
+      <BrowserRouter basename={basename}>
+        <Routes>
+          <Route path="*" element={<AuthRoute />}>
+            <Route path="factory" element={<Factory />}></Route>
+            <Route path="shop/:shopId" element={<View>店铺</View>}></Route>
+            <Route path="message" element={<Message />}></Route>
+            <Route path="moments" element={<Moments />}></Route>
+            <Route path="magazine" element={<Magazine />}></Route>
+            <Route path="mine" element={<Mine />}></Route>
+            <Route path="login" element={<Login />}></Route>
+            <Route index element={<Navigate to={lastTab || '/factory'} />}></Route>
+            {/* <Route path="*" element={<NotFound />}></Route> */}
+          </Route>
+        </Routes>
+      </BrowserRouter>
     </ConfigProvider>
   )
+}
+
+function NotFound() {
+  return <View>404</View>
 }
