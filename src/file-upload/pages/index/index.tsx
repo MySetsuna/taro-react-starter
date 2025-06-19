@@ -88,15 +88,16 @@ export default function FileUpload() {
     }
 
     setShowSelect(false)
-    try {
-      const ossInfo = await ossClient.upload(file, (p) => {
-        setPercent(p)
-      })
-      setStatus('success')
-      sendUploadCompleteMessage(file, ossInfo)
-    } catch {
-      Taro.showToast({ title: '上传失败', icon: 'error' })
-    }
+    // try {
+    const ossInfo = await ossClient.upload(file, (p) => {
+      setPercent(p)
+    })
+    setStatus('success')
+    sendUploadCompleteMessage(file, ossInfo)
+    // } catch (error) {
+    //   console.log(error, 'error')
+    //   Taro.showToast({ title: '上传失败', icon: 'error' })
+    // }
   }
 
   const pauseUpload = async () => {

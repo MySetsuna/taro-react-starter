@@ -1,231 +1,99 @@
 import { View } from '@tarojs/components'
-import { Button, Cascader, Image, InfiniteLoading, SearchBar } from '@nutui/nutui-react-taro'
-import { Location, Message } from '@nutui/icons-react-taro'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { IFactory } from 'types/module'
-import type { IRowsResponse } from 'types/http'
+import { useLoad } from '@tarojs/taro'
+import { Button, Image, SearchBar } from '@nutui/nutui-react-taro'
+import { useUserStore } from '@/models'
+import { default as IconLM } from '@/icons'
 import Taro from '@tarojs/taro'
-import { useNavigate } from 'react-router'
-import { useDebounce } from '@/hooks/common'
-import { EResponseCode, request } from '@/api'
-import { useAreaOptions, useFactoryStore } from '@/models/factory'
-import './index.scss'
-import { BackTop } from '@/components/back-top'
 
 function Factory() {
-  // value
-  const factoryList = useFactoryStore.use.factoryList()
-  const locationValue = useFactoryStore.use.currentLocation()
-  const searchValue = useFactoryStore.use.searchValue()
-  const categorys = useFactoryStore.use.categories()
-  const currentCategory = useFactoryStore.use.currentCategory()
-  const areaData = useFactoryStore.use.areaData()
+  const isLogged = useUserStore.use.isLogged()
 
-  // set
-  const setFactoryList = useFactoryStore.use.setFactoryList()
-  const setLocationValue = useFactoryStore.use.setLocation()
-  const setSearchValue = useFactoryStore.use.setSearchValue()
-  const setCurrentCategory = useFactoryStore.use.setCurrentCategory()
+  useLoad(() => {
+    console.log('Factory page loaded.')
+  })
 
-  // fetch
-  const fetchCategoryList = useFactoryStore.use.fetchCategoryList()
-  const fetchAreaData = useFactoryStore.use.fetchAreaData()
-
-  const navigate = useNavigate()
-
-  const [isVisible, setIsVisible] = useState(false)
-  const [wrapperHeight, setWrapperHeight] = useState(0)
-  const [scrollTop, setScrollTop] = useState(0)
-
-  const categoryList = useMemo(() => categorys.slice(), [categorys])
-
-  const options = useAreaOptions(areaData)
-
-  const displayLocatiopn = useMemo(() => {
-    let displayLocatiopn = '全国'
-    options.forEach((item: any) => {
-      if (item.value === locationValue[0]) {
-        if (locationValue[1] > 0) {
-          item.children.forEach((child: any) => {
-            if (child.value === locationValue[1]) {
-              displayLocatiopn = child.text
-            }
-          })
-        }
-        else {
-          displayLocatiopn = item.text
-        }
-      }
-    })
-    return displayLocatiopn
-  }, [locationValue, options])
-
-  const onChange = (value: any) => {
-    setLocationValue(value)
+  const handleSearch = (value: string) => {
+    console.log('搜索:', value)
   }
 
-  const getWrapperHeight = useCallback(() => {
-    return new Promise<number>((resolve) => {
-      let wrapperHeight = 600
-      const fullHeight = Taro.getWindowInfo().windowHeight
-      const query = Taro.createSelectorQuery()
-      query.select('#factory-header').boundingClientRect()
-      query.select('.nut-tabbar').boundingClientRect()
-      query.exec((res) => {
-        if (res) {
-          const headerHeight = res[0]?.height ?? 0
-          const tabbarHeight = res[1]?.height ?? 0
-          wrapperHeight = fullHeight - headerHeight - tabbarHeight
-        }
-        resolve(wrapperHeight)
-      })
-    })
-  }, [])
+  const handleShopClick = (shopId: string) => {
+    Taro.navigateTo({ url: `/pages/shop/index?shopId=${shopId}` })
+  }
 
-  const fetchFactoryList = useCallback(async () => {
-    const data = await request<IRowsResponse<IFactory>>('/app/tenant/list', {
-      method: 'GET',
-      params: {
-        province: locationValue[0] > 0 ? locationValue[0] : undefined,
-        city: locationValue[1] > 0 ? locationValue[1] : undefined,
-        name: searchValue ?? undefined,
-        tenantCategoryId: currentCategory,
-      },
-    })
-
-    if (data.code === EResponseCode.SUCCESS) {
-      setFactoryList(data.rows)
-    }
-  }, [locationValue, searchValue, currentCategory])
-
-  const debouncedSearch = useDebounce(fetchFactoryList, 300)
-
-  useEffect(() => {
-    debouncedSearch()
-  }, [locationValue, searchValue, currentCategory])
-
-  useEffect(() => {
-    fetchCategoryList()
-    fetchAreaData()
-    getWrapperHeight().then((height) => {
-      setWrapperHeight(height)
-    })
-  }, [])
+  const handleLogin = () => {
+    Taro.navigateTo({ url: '/pages/login/index' })
+  }
 
   return (
-    <>
-      <View className="factory grid grid-rows-[58Px_1fr] h-[100vh]">
-        <View
-          id="factory-header"
-          className="factory-header flex items-center top-0 bg-white z-10 pl-2 pr-2 border-0 !border-b border-solid border-[#e2e2e2] fixed w-full h-[58Px] box-border"
-        >
-          <View className="location flex items-center mr-1 active:text-red-400" onClick={() => setIsVisible(true)}>
-            <Location className="nut-icon-am-jump nut-icon-am-infinite" name="locationg3" />
-            <View className="location-text leading-10 mr-1 ml-1 text-ellipsis overflow-hidden whitespace-nowrap w-12 text-sm">
-              {displayLocatiopn}
+    <View className="factory">
+      <View className="header">
+        <View className="search-container">
+          <SearchBar
+            placeholder="搜索厂家、产品"
+            onSearch={handleSearch}
+            className="search-bar"
+          />
+        </View>
+      </View>
+
+      <View className="content">
+        <View className="section">
+          <View className="section-title">推荐厂家</View>
+          <View className="shop-list">
+            <View className="shop-item" onClick={() => handleShopClick('1')}>
+              <Image className="shop-image" src="shop1.jpg" />
+              <View className="shop-info">
+                <View className="shop-name">优质厂家A</View>
+                <View className="shop-desc">专业生产高质量产品</View>
+                <View className="shop-rating">★★★★★</View>
+              </View>
             </View>
-          </View>
-          <View className="flex items-center w-full justify-start relative">
-            <SearchBar
-              placeholder="搜索"
-              onSearch={setSearchValue}
-              shape="round"
-              style={{ '--nutui-searchbar-input-height': '38PX' } as any}
-            />
+            <View className="shop-item" onClick={() => handleShopClick('2')}>
+              <Image className="shop-image" src="shop2.jpg" />
+              <View className="shop-info">
+                <View className="shop-name">优质厂家B</View>
+                <View className="shop-desc">创新设计，品质保证</View>
+                <View className="shop-rating">★★★★☆</View>
+              </View>
+            </View>
           </View>
         </View>
 
-        <View
-          className="factory-wrapper grid grid-cols-[21%_1fr] fixed top-[58Px] w-full h-[100vh]"
-          style={wrapperHeight ? { height: `${wrapperHeight}Px` } : undefined}
-        >
-          <InfiniteLoading
-            enhanced
-            showScrollbar={false}
-            className="category-list bg-[#f6f6f6] overflow-y-auto overflow-x-hidden !h-[inherit] "
-          >
-            {categoryList.map((item) => {
-              return (
-                <View
-                  className={[
-                    'category-item h-[45Px] leading-[45Px] text-center text-sm',
-                    currentCategory === item.id ? 'bg-white font-bold' : 'bg-[#f6f6f6] text-gray-500',
-                  ].join(' ')}
-                  key={item.id}
-                  onClick={() => {
-                    setCurrentCategory(item.id)
-                  }}
-                >
-                  <View className="category-text">{item.name}</View>
-                </View>
-              )
-            })}
-          </InfiniteLoading>
-          <InfiniteLoading
-            enhanced
-            showScrollbar={false}
-            className="factory-list pl-2 pr-2 overflow-y-auto overflow-x-hidden !h-[inherit]"
-            pullRefresh
-            onRefresh={fetchFactoryList}
-            scrollAnimationDuration="200"
-            scrollWithAnimation
-            onScroll={setScrollTop}
-            scrollTop={scrollTop === -1 ? 0 : undefined}
-          >
-            {factoryList.map((item, index) => {
-              return (
-                <View
-                  className="factory-item flex gap-3 items-center mt-3 pr-3"
-                  key={item.id}
-                  id={`factory-list-${index}`}
-                >
-                  <Image className="logo" src={item.backgroundImageUrl} radius={5} height={70} width={70} />
-                  <View className="factory-content flex flex-auto border-0 !border-b border-solid border-[#e2e2e2] w-0 h-[70Px]  pb-1">
-                    <View className="factory-info flex-auto h-full flex flex-col justify-between w-0">
-                      <View className="name text-base font-bold leading-6 w-100% text-ellipsis overflow-hidden whitespace-nowrap">
-                        {item.companyName}
-                      </View>
-                      <View className="desc text-gray-400 text-xs leading-5 h-5 text-ellipsis overflow-hidden whitespace-nowrap">
-                        {item.intro}
-                      </View>
-                      <Button
-                        type="primary"
-                        size="mini"
-                        style={{ width: '50%' }}
-                        onClick={() => {
-                          const path = `/pages/chat/index?sendId=${item.id}&companyName=${item.companyName}&type=C2C&avatar=${item.backgroundImageUrl}`
-                          Taro.navigateTo({ url: path })
-                          Taro.setNavigationBarTitle({ title:'消息' })
-                        }}
-                      >
-                        <View className="flex items-center leading-4 gap-1 ">
-                          <View>去咨询</View>
-                          <Message size={10} name="message" />
-                        </View>
-                      </Button>
-                    </View>
-                    <View className="location text-gray-400 text-xs leading-2">{item.city}</View>
-                  </View>
-                </View>
-              )
-            })}
-            <BackTop isShow={scrollTop > 100} onToTop={() => setScrollTop(-1)} />
-          </InfiniteLoading>
+        <View className="section">
+          <View className="section-title">热门产品</View>
+          <View className="product-grid">
+            <View className="product-item">
+              <Image className="product-image" src="product1.jpg" />
+              <View className="product-name">产品名称1</View>
+              <View className="product-price">¥99.00</View>
+            </View>
+            <View className="product-item">
+              <Image className="product-image" src="product2.jpg" />
+              <View className="product-name">产品名称2</View>
+              <View className="product-price">¥199.00</View>
+            </View>
+            <View className="product-item">
+              <Image className="product-image" src="product3.jpg" />
+              <View className="product-name">产品名称3</View>
+              <View className="product-price">¥299.00</View>
+            </View>
+            <View className="product-item">
+              <Image className="product-image" src="product4.jpg" />
+              <View className="product-name">产品名称4</View>
+              <View className="product-price">¥399.00</View>
+            </View>
+          </View>
         </View>
       </View>
-      <Cascader
-        visible={isVisible}
-        value={locationValue}
-        title="厂家地址"
-        options={options}
-        closeable
-        onClose={() => {
-          setIsVisible(false)
-        }}
-        onChange={onChange}
-        className="pb-5"
-      />
-    </>
+
+      {!isLogged && (
+        <View className="login-prompt">
+          <Button type="primary" onClick={handleLogin}>
+            登录查看更多内容
+          </Button>
+        </View>
+      )}
+    </View>
   )
 }
 

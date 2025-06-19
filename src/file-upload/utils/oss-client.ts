@@ -77,9 +77,16 @@ class AliOssClient implements OssClient {
         this.checkpoint = cpt
         onProgress?.(p * 100)
       },
+      success: (result) => {
+        console.log(`success:`, result)
+      },
+      error: (err) => {
+        console.error(`error:`, err)
+      },
     })
 
-    await uploadTask
+    const result = await uploadTask
+		console.log(`multiPartUpload result:`, result);
     const ossInfo = await this.finishUpload(this.objectKey)
     return ossInfo.data
   }

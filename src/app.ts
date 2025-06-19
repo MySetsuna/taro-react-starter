@@ -1,20 +1,21 @@
-import type { PropsWithChildren } from 'react'
+import { useEffect, type PropsWithChildren } from 'react'
 import Taro, { useDidShow, useLaunch, useUnload } from '@tarojs/taro'
 import './app.scss'
-import { useImStore, useImStoreReset,  } from './models'
+import { useImStore, useImStoreReset } from './models'
 import { utils } from './libs'
 
 function App({ children }: PropsWithChildren<any>) {
   const setIsSDKReady = useImStore.use.setIsSDKReady()
   const im = useImStore.use.im()
 
-  useLaunch(() => {
-
+  useEffect(() => {
     useImStoreReset()
     console.log('App launched.')
-    Taro.getEnv() === Taro.ENV_TYPE.WEAPP
-      ? __non_webpack_require__.async('./im-sdk/pages/blank/index')
-      : import('./im-sdk/pages/blank/index')
+    //
+    //   ? __non_webpack_require__.async('./im-sdk/pages/blank/index')
+    // if (Taro.getEnv() === Taro.ENV_TYPE.WEAPP) {
+    //   __non_webpack_require__.async('./im-sdk/pages/blank/index')
+    // }
     utils.onIMSDKReady(() => {
       console.log('onIMSDKReady')
       setIsSDKReady(true)
@@ -22,12 +23,12 @@ function App({ children }: PropsWithChildren<any>) {
     return () => {
       console.log(im, 'im11111111111111')
     }
-  })
+  }, [])
 
-  useUnload(() => {
-    console.log('App unloaded.')
-    im?.destroy?.()
-  })
+  // useUnload(() => {
+  //   console.log('App unloaded.')
+  //   im?.destroy?.()
+  // })
 
   useDidShow(() => {})
 

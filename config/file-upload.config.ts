@@ -12,7 +12,7 @@ const config: UserConfigExport = {
     828: 1.81 / 2,
   },
   sourceRoot: 'src/file-upload',
-  outputRoot: 'dist/file-upload',
+  outputRoot: 'build/file-upload',
   plugins: ['@tarojs/plugin-html', '@tarojs/plugin-http'],
   alias: {
     '@': path.resolve(__dirname, '../src'),
@@ -54,7 +54,7 @@ const config: UserConfigExport = {
     },
   },
   h5: {
-    publicPath: '/file-upload/',
+    publicPath: '/',
     staticDirectory: 'static',
     postcss: {
       autoprefixer: {

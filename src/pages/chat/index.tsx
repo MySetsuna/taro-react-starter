@@ -10,7 +10,8 @@ import {
   Top,
   VolumeMax,
   Image as ImageIcon,
-  Video,
+  Video as VideoIcon,
+  ArrowDown,
 } from '@nutui/icons-react-taro'
 import {
   Avatar,
@@ -26,16 +27,19 @@ import {
   TextArea,
   VirtualList,
   CircleProgress,
+  Video,
 } from '@nutui/nutui-react-taro'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useState, useRef, useEffect, CSSProperties } from 'react'
+import { useState, useRef, useEffect, CSSProperties, useMemo } from 'react'
 import { emojis } from '../../tabs/message/emoji/data'
 import './index.scss'
 import { useNavTitle } from '@/hooks'
 import { request } from '@/api'
 import { IDataResponse, IRequestOptionsWithType } from 'types/http'
 import SoundMessage from '@/components/SoundMessage'
+import FileDownload from '@/components/FileDownload'
+import { useCacheStore } from '@/models/cache'
 
 const Chat: React.FC = () => {
   const params = Taro.getCurrentInstance().router?.params
@@ -79,7 +83,8 @@ const Chat: React.FC = () => {
 
   const token = useUserStore.use.token()
   const baseUrl = process.env.TARO_APP_API
-
+  const fileDownloadMap = useCacheStore.use.fileDownloadMap()
+  const addFileDownload = useCacheStore.use.addFileDownload()
   const textAreaRef = useRef<any>(null)
 
   const [progress, setProgress] = useState(0)
@@ -215,10 +220,9 @@ const Chat: React.FC = () => {
     console.log(message, 'send message ')
 
     if (message) {
-      sendMessageFun(message, mediaType)
+      sendMessageFun(message)
     }
   }
-
 
   // 停止录音
   const stopRecording = () => {
@@ -302,13 +306,7 @@ const Chat: React.FC = () => {
         maxDuration: 60,
       })
 
-      createMediaMessage(
-        {
-          path: res.tempFilePath,
-          duration: res.duration,
-        },
-        'video'
-      )
+      createMediaMessage(res, 'video')
     } catch (error) {
       console.error('选择视频失败:', error)
       Taro.showToast({
@@ -326,20 +324,12 @@ const Chat: React.FC = () => {
         type: 'file',
       })
 
-      const file = res.tempFiles[0]
-      const message = tim.createCustomMessage({
+      const message = tim.createFileMessage({
         to: messageToImId,
         conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
-        payload: {
-          data: JSON.stringify({
-            type: 'file',
-            path: file.path,
-            name: file.name,
-            size: file.size,
-          }),
-        },
+        payload: res,
       })
-      sendMessageFun(message, 'file')
+      sendMessageFun(message)
     } catch (error) {
       console.error('选择文件失败:', error)
       Taro.showToast({
@@ -351,18 +341,23 @@ const Chat: React.FC = () => {
 
   const chooseBigFile = () => {
     Taro.navigateTo({
-      url: `/pages/file-upload/index?backUrl=${encodeURIComponent(`chat${location.search}`)}`,
+      url: `/pages/file-upload/index?conversationID=${conversationID}&messageToImId=${messageToImId}`,
     })
   }
 
-  const sendMessageFun = (message, type) => {
+  const sendMessageFun = (message) => {
+    setMyMessages((prev) => [...prev, message])
+    setSendMsg('')
+    setShowEmoji(false)
+    scrollToBottom()
+    Taro.pageScrollTo({
+      scrollTop: 0,
+      duration: 200,
+    })
     const promise = tim.sendMessage(message)
     promise.then((imResponse) => {
-      setMessageRead()
       setMyMessages((prev) => [...prev, imResponse.data.message])
-      setSendMsg('')
-      setShowEmoji(false)
-      scrollToBottom()
+      setMessageRead()
     })
   }
 
@@ -380,6 +375,7 @@ const Chat: React.FC = () => {
       nextReqMessageID,
     }
     const promise = tim.getMessageList(param)
+    console.log('getMsgList =========')
 
     promise
       .then((imResponse) => {
@@ -438,53 +434,7 @@ const Chat: React.FC = () => {
       }
 
       const message = tim.createTextMessage(options)
-      sendMessageFun(message, 'text')
-    }
-  }
-
-  const msgDisplay = (item) => {
-    switch (item.type) {
-      case 'TIMTextElem':
-        return <Text className="select-text">{item.payload.text}</Text>
-      case 'TIMImageElem':
-        return (
-          <Image src={item.payload.imageInfoArray[0].url} mode="aspectFit" className="max-w-[200px] max-h-[200px]" />
-        )
-      case 'TIMSoundElem':
-        return (
-          <SoundMessage
-            url={item.payload.url}
-            duration={item.payload.second}
-            onConvertVoiceToText={async () => {
-              const res = await tim.convertVoiceToText({ message: item })
-              return res.data.result
-            }}
-          />
-        )
-      case 'TIMVideoElem':
-        return <Video svgSrc={item.payload.videoUrl} className="max-w-[200px] max-h-[200px]" />
-      case 'TIMCustomElem':
-        const data = item.payload.data
-        switch (data.type) {
-          case 'voice':
-            return (
-              <View className="flex items-center">
-                <VolumeMax size={20} />
-                <Text>{data.duration}s</Text>
-              </View>
-            )
-          case 'file':
-            return (
-              <View className="flex items-center">
-                <Top size={20} />
-                <Text>{data.name}</Text>
-              </View>
-            )
-          default:
-            return null
-        }
-      default:
-        return null
+      sendMessageFun(message)
     }
   }
 
@@ -610,26 +560,120 @@ const Chat: React.FC = () => {
   }
 
   useEffect(() => {
-    setMyMessages([])
-    return () => {
-      setMyMessages(undefined)
+    if (tim && conversationID) {
+      getMsgList()
+      Taro.eventCenter.on('UPLOAD_COMPLETE', (data) => {
+        console.log(data, 'data')
+        if (data.conversationID === conversationID && data.messageToImId === messageToImId) {
+          const message = tim.createCustomMessage({
+            to: messageToImId,
+            conversationType: type === 'GROUP' ? utils.TIM_TYPES.CONV_GROUP : utils.TIM_TYPES.CONV_C2C,
+            payload: {
+              description: `BigFile:${data.name}`,
+              data: JSON.stringify(data),
+              extension: 'BigFile',
+            },
+          })
+          sendMessageFun(message)
+        }
+      })
     }
-  }, [])
+  }, [tim, conversationID])
+
+  const hasUnreadMessage = useMemo(() => {
+    return myMessages.some((item) => item.isRead === false)
+  }, [myMessages])
 
   useEffect(() => {
-    if (tim && conversationID && !myMessages.length) {
-      getMsgList()
-    }
-    if (myMessages.length) {
+    if (hasUnreadMessage) {
       setMessageRead()
     }
-  }, [tim, conversationID, myMessages])
+  }, [hasUnreadMessage])
 
   useEffect(() => {
     if (sendId && !conversationID) {
       initConversation(sendId)
     }
   }, [sendId, conversationID])
+
+  const msgDisplay = (item) => {
+    switch (item.type) {
+      case 'TIMTextElem':
+        return <Text className="select-text">{item.payload.text}</Text>
+      case 'TIMImageElem':
+        return (
+          <Image
+            src={item.payload.imageInfoArray?.[1].imageUrl}
+            preview={item.payload.imageInfoArray?.[0].imageUrl}
+            mode="aspectFit"
+            className="max-w-[200px] max-h-[200px]"
+          />
+        )
+      case 'TIMSoundElem':
+        return (
+          <SoundMessage
+            url={item.payload.url}
+            duration={item.payload.second}
+            onConvertVoiceToText={async () => {
+              const res = await tim.convertVoiceToText({ message: item })
+              return res.data.result
+            }}
+          />
+        )
+      case "TIMVideoFileElem":
+        return (
+          <Video
+            source={{
+              src: item.payload.remoteVideoUrl,
+              type: `video/${item.videoFormat}`,
+            }}
+            className="max-w-[200px] max-h-[200px]"
+          />
+        )
+      case 'TIMFileElem':
+        return (
+          <FileDownload
+            id={item.payload.uuid}
+            isDownloaded={!!fileDownloadMap[item.payload.uuid]}
+            url={item.payload.url}
+            size={item.payload.size}
+            fileName={item.payload.name}
+            savedPath={fileDownloadMap[item.payload.uuid]?.savedPath}
+            onSuccess={(res) => {
+              addFileDownload(item.payload.uuid, item.payload.url, item.payload.size, item.payload.name, res.savedFilePath)
+            }}
+          />
+        )
+      case 'TIMCustomElem':
+        if (item.payload.extension === 'BigFile') {
+          /**
+           * @data
+           * name: file.name,
+           * size: file.size,
+           * type: file.type,
+           * url: ossData.url,
+           * ossId: ossData.ossId,
+           */
+          const data = JSON.parse(item.payload.data)
+          return (
+            <FileDownload
+              id={data.ossId}
+              isDownloaded={!!fileDownloadMap[data.ossId]}
+              url={data.url}
+              size={data.size}
+              fileName={data.name}
+              savedPath={fileDownloadMap[data.ossId]?.savedPath}
+              onSuccess={(res) => {
+                addFileDownload(data.ossId, data.url, data.size, data.name, res.savedFilePath)
+              }}
+            />
+          )
+        }
+        return <Text>{'[TIMCustomElem]'}</Text>
+      default:
+        return null
+    }
+  }
 
   return (
     <View className="msg-room flex flex-col h-[100vh]">
@@ -807,7 +851,7 @@ const Chat: React.FC = () => {
               <Text className="text-xs mt-1">图片</Text>
             </View>
             <View className="flex flex-col items-center" onClick={chooseVideo}>
-              <Video size={24} />
+              <VideoIcon size={24} />
               <Text className="text-xs mt-1">视频</Text>
             </View>
             <View className="flex flex-col items-center" onClick={chooseFile}>

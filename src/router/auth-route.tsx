@@ -20,6 +20,8 @@ const AuthRoute = () => {
   const location = useLocation()
   const isLogin = token && isLogged
 
+  console.log(location.pathname, 'location.pathname isLogin', isLogin)
+
   useEffect(() => {
     if (!isLogin) {
       if (permissionRoutes.some((item) => item === location.pathname)) {

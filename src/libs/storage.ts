@@ -6,6 +6,7 @@ enum StorageSceneKey {
   AUTH = 'storage-auth',
   FACTORY = 'storage-factory',
   IM = 'storage-im',
+  CACHE = 'storage-cache',
 }
 
 function getItem<T = any>(key: string): T {

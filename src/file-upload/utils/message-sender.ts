@@ -88,7 +88,7 @@ export function sendUploadCompleteMessage(file: File, ossData: OssData) {
 
   // 根据不同环境使用不同的消息发送方式
   const env = Taro.getEnv()
-
+  console.log(env, 'env', fileInfo, 'fileInfo')
   if (env === 'WEB') {
     Taro.showToast({
       title: 'H5环境',

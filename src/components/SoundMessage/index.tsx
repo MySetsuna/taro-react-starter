@@ -1,4 +1,4 @@
-import { View, Text } from '@tarojs/components'
+import { View, Text, Progress } from '@tarojs/components'
 import { useState, useRef, useEffect } from 'react'
 import { Loading, VolumeMax, VolumeMute } from '@nutui/icons-react-taro'
 import Taro from '@tarojs/taro'
@@ -11,12 +11,7 @@ interface SoundMessageProps {
   onConvertVoiceToText?: () => Promise<string>
 }
 
-const SoundMessage: React.FC<SoundMessageProps> = ({
-  url,
-  duration,
-  isSelf = false,
-  onConvertVoiceToText
-}) => {
+const SoundMessage: React.FC<SoundMessageProps> = ({ url, duration, isSelf = false, onConvertVoiceToText }) => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [translatedText, setTranslatedText] = useState('')
   const [isTranslating, setIsTranslating] = useState(false)
@@ -34,7 +29,7 @@ const SoundMessage: React.FC<SoundMessageProps> = ({
     // 监听播放结束
     audioRef.current.onPause(() => {
       setIsPlaying(false)
-     })
+    })
 
     audioRef.current.onStop(() => {
       setIsPlaying(false)
@@ -56,7 +51,7 @@ const SoundMessage: React.FC<SoundMessageProps> = ({
       setIsPlaying(false)
       Taro.showToast({
         title: '播放失败',
-        icon: 'none'
+        icon: 'none',
       })
     })
 
@@ -96,7 +91,7 @@ const SoundMessage: React.FC<SoundMessageProps> = ({
           console.error('语音转文字失败:', error)
           Taro.showToast({
             title: '转文字失败',
-            icon: 'none'
+            icon: 'none',
           })
         } finally {
           setIsTranslating(false)
@@ -113,41 +108,27 @@ const SoundMessage: React.FC<SoundMessageProps> = ({
   }
 
   // 计算播放进度
-  const progress = (currentTime / duration) * 100
+  const progress = Math.max(0, Math.min(100, (currentTime / duration) * 100))
+  const remainingTime = Math.max(0, duration - currentTime).toFixed(0)
 
   return (
     <View className={`sound-message ${isSelf ? 'self' : ''}`}>
-      <View
-        className="sound-content"
-        onClick={handlePlay}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
+      <View className="sound-content" onClick={handlePlay} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         {isSelf ? (
           <>
-            <Text className="duration">{duration}s</Text>
+            <Text className="duration">{remainingTime}s</Text>
             <View className="sound-icon">
               {isPlaying ? <Loading size={20} /> : <VolumeMax size={20} />}
-              {isPlaying && (
-                <View
-                  className="progress-bar"
-                  style={{ width: `${progress}%` }}
-                />
-              )}
+              {isPlaying && <Progress percent={progress} strokeWidth={3} />}
             </View>
           </>
         ) : (
           <>
             <View className="sound-icon">
               {isPlaying ? <Loading size={20} /> : <VolumeMax size={20} />}
-              {isPlaying && (
-                <View
-                  className="progress-bar"
-                  style={{ width: `${progress}%` }}
-                />
-              )}
+              {isPlaying && <Progress percent={progress} strokeWidth={3} />}
             </View>
-            <Text className="duration">{duration}s</Text>
+            <Text className="duration">{remainingTime}s</Text>
           </>
         )}
       </View>

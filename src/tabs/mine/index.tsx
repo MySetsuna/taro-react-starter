@@ -1,14 +1,12 @@
 import { View } from '@tarojs/components'
 import { useLoad } from '@tarojs/taro'
 import { Button, Image } from '@nutui/nutui-react-taro'
-import { useNavigate } from 'react-router'
 import { useUserStore } from '@/models'
+import Taro from '@tarojs/taro'
 
 function Mine() {
   const removeToken = useUserStore.use.removeToken()
   const isLogged = useUserStore.use.isLogged()
-
-  const navigate = useNavigate()
 
   useLoad(() => {
     console.log('Mine page loaded.')
@@ -16,11 +14,11 @@ function Mine() {
 
   const logout = () => {
     removeToken()
-    navigate('/login')
+    Taro.navigateTo({ url: '/pages/login/index' })
   }
 
   const login = () => {
-    navigate('/login')
+    Taro.navigateTo({ url: '/pages/login/index' })
   }
 
   return (

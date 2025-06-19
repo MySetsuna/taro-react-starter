@@ -2,7 +2,6 @@ import { EResponseCode, request, requestInstance } from '@/api'
 import { useAuthStore, useRefeshTokenTimer, useUserStore } from '@/models'
 import { Avatar, Button, Divider, Loading, Overlay } from '@nutui/nutui-react-taro'
 import { Input, View } from '@tarojs/components'
-import { useNavigate } from 'react-router'
 import { default as IconLM } from '@/icons'
 import { useNavTitle } from '@/hooks'
 import { useEffect, useState } from 'react'
@@ -24,7 +23,9 @@ const Login = () => {
   const [code, setCode] = useState('')
   const [countdown, setCountdown] = useState(0)
 
-  const navigate = useNavigate()
+  const navigate = (url: string) => {
+    Taro.navigateTo({ url })
+  }
 
   const login = async () => {
     const res = await request<IDataResponse<ILoginInfo>, ISMSLoginOptions>('/auth/login', {
@@ -44,7 +45,7 @@ const Login = () => {
     console.log(res, 'resresres')
 
     setToken('dfasdfasdfasdfsda ')
-    navigate('/factory')
+    navigate('/pages/index/index')
   }
 
   // 获取验证码
@@ -87,7 +88,7 @@ const Login = () => {
       },
     })
     setToken(result.data.access_token)
-    navigate('/factory')
+    navigate('/pages/index/index')
   }
 
   const wechatLogin = async (phonenumber?: number) => {
@@ -128,7 +129,7 @@ const Login = () => {
           setUserInfo(userInfo)
         }
 
-        navigate('/factory')
+        navigate('/pages/index/index')
       } else {
         Taro.showToast({
           title: res.msg,
@@ -211,4 +212,4 @@ const Login = () => {
   )
 }
 
-export default useNavTitle(Login, '登录')
+export default Login

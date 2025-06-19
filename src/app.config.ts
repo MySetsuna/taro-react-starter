@@ -15,12 +15,12 @@ export default defineAppConfig({
       pages: ['pages/blank/index'],
     },
   ],
-  // preloadRule: {
-  //   'pages/index/index': {
-  //     network: 'all',
-  //     packages: ['im-sdk'],
-  //   },
-  // },
+  preloadRule: {
+    'pages/index/index': {
+      network: 'all',
+      packages: ['im-sdk'],
+    },
+  },
   // tabBar: {
   //   custom: true,
   //   list: [
